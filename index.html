@@ -371,9 +371,12 @@
     <div style="display:flex;align-items:center;gap:11px;margin-bottom:14px"><div class="logo" style="width:46px;height:42px;"></div><div><div style="font-family:'Fraunces',serif;font-size:20px;color:var(--green);font-weight:600">GNR Suite</div><div style="font-size:11px;color:var(--ink2);font-weight:700" id="lgWho">Sign in to your farm</div></div></div>
     <label class="fl">Email</label><input class="field" id="lgEmail" type="email" autocomplete="username" placeholder="you@farm.com">
     <label class="fl">Password</label><input class="field" id="lgPass" type="password" autocomplete="current-password" placeholder="••••••••">
+    <div id="lgP2w" style="display:none"><label class="fl">Confirm password</label><input class="field" id="lgPass2" type="password" autocomplete="new-password" placeholder="••••••••"></div>
     <div id="lgErr" style="display:none;background:var(--red-bg);color:var(--red);font-size:12px;font-weight:700;border-radius:10px;padding:9px 12px;margin-bottom:11px"></div>
     <button class="btn clay" data-a="doLogin" id="lgBtn">🔐 Sign in</button>
-    <p style="font-size:10.5px;color:var(--ink2);margin-top:10px;line-height:1.5">Accounts are created by the farm administrator. Data stays locked until you sign in. Works offline after the first sign-in on this device.</p>
+    <button class="btn clay" data-a="doSignup" id="suBtn" style="display:none">✨ Create my account</button>
+    <button class="btn ghost" data-a="gateToggle" id="gateSwap" style="margin-top:2px">✨ First time? Create my account</button>
+    <p style="font-size:10.5px;color:var(--ink2);margin-top:10px;line-height:1.5">Data stays locked until you sign in. Works offline after the first sign-in on this device.</p>
   </div>
 </div>
 <div id="app">
@@ -541,6 +544,7 @@
     <div class="seclabel">Cloud Sync</div>
     <div id="syncStatusBox"></div>
     <button class="btn" data-a="openSync" style="margin-bottom:9px;">🔗 Set up / manage sync</button>
+    <button class="btn" data-a="inviteDevice" style="margin-bottom:9px;">📲 Invite a device (one-tap setup)</button>
     <div id="authLine" style="margin-bottom:16px"></div>
     <div class="seclabel">Site</div>
     <div class="info-card">
@@ -645,9 +649,11 @@ const SEED_ALERTS=[{id:'al1',animal:'Whole herd',sev:'high',prob:'Grain silo / m
 const TYPES={note:{e:'📝',l:'Note'},health:{e:'🏥',l:'Health'},feed:{e:'🍼',l:'Feeding'},treatment:{e:'💊',l:'Treatment'},weight:{e:'⚖️',l:'Weight'},tag:{e:'🏷️',l:'Tag'},milestone:{e:'✨',l:'Milestone'},arrival:{e:'🐣',l:'Arrival'},removal:{e:'📤',l:'Removed'}};
 
 /* ===== VET / PROTOCOL DATA ===== */
-const APP_VERSION='7.2';
+const APP_VERSION='7.4';
 const APP_STAGE='Stable — ready to deploy';
 const CHANGELOG=[
+  {v:'7.4',d:'Jun 2026',c:'✨ Self-service accounts: invited people create their own password right on the sign-in screen — no admin needed.'},
+  {v:'7.3',d:'Jun 2026',c:'📲 One-tap device invite: share a setup link by text — the receiving phone auto-configures the farm connection, only the password is asked.'},
   {v:'7.2',d:'Jun 2026',c:'🛩️ Offline drone map: import your own drone shot as the map background (L.CRS.Simple, stored in the local vault — loads with zero internet). Own pins & paddocks per view, 📏 two-point scale calibration brings back real m²/ha areas. GPS/satellite view kept side-by-side.'},
   {v:'7.1',d:'Jun 2026',c:'Design pass — equipment-grade UI: floating frosted navigation bar with lime glow, tactile press feedback on every control, layered depth on cards, glass sync pill, lime focus rings, refined sheets & login gate. Reduced-motion respected.'},
   {v:'7.0',d:'Jun 2026',c:'PHASE 0 — Industrial foundation. 🔐 Account sign-in (Supabase Auth, JWT, offline-trusted sessions). 🗄️ Media vault: photos stored as Blobs in IndexedDB (Dexie), thumbnails only in the sync payload, background upload worker to Supabase Storage with auto-purge of synced originals.'},
@@ -708,6 +714,36 @@ function mergeStates(a,b){
 /* ===== SYNC (Supabase REST + polling) ===== */
 let sync={url:'',key:'',room:'gnr-shefford',on:false,status:'offline',last:0};
 function loadSyncCfg(){try{const c=JSON.parse(Local.get('sync:config')||'{}');sync.url=c.url||'';sync.key=c.key||'';sync.room=c.room||'gnr-shefford';sync.on=!!(sync.url&&sync.key);}catch(e){}}
+/* ===== ONE-TAP DEVICE INVITE ===== */
+function applyCfgFromHash(){
+  try{
+    const m=(location.hash||'').match(/#cfg=([A-Za-z0-9+/=_-]+)/);
+    if(!m)return false;
+    const c=JSON.parse(atob(m[1].replace(/-/g,'+').replace(/_/g,'/')));
+    if(!c.u||!c.k)return false;
+    Local.set('sync:config',JSON.stringify({url:c.u,key:c.k,room:c.r||'gnr-shefford'}));
+    try{history.replaceState(null,'',location.pathname);}catch(e){location.hash='';}
+    return true;
+  }catch(e){return false;}
+}
+function inviteLink(){
+  if(!sync.on)return'';
+  const b=btoa(JSON.stringify({u:sync.url,k:sync.key,r:sync.room})).replace(/\+/g,'-').replace(/\//g,'_');
+  return location.origin+location.pathname+'#cfg='+b;
+}
+async function inviteDevice(){
+  const link=inviteLink();
+  if(!link){toast('Configure sync first');return;}
+  const msg='GNR Suite — ouvre ce lien sur ton téléphone, ajoute à l\'écran d\'accueil, puis entre ton mot de passe : '+link;
+  if(navigator.share){try{await navigator.share({title:'GNR Suite',text:msg});return;}catch(e){}}
+  try{await navigator.clipboard.writeText(link);toast('🔗 Link copied — paste it in a text message');}catch(e){}
+  document.getElementById('sheet').innerHTML=`<div class="grab"></div><h3>📲 Invite a device</h3>
+    <p class="lead">Send this link to Jessica or Paul. They tap it, add to home screen, type their password — done. No manual setup.</p>
+    <textarea class="field" style="height:110px;font-size:11px" readonly>${esc(link)}</textarea>
+    <p class="lead" style="font-size:11px">⚠️ This link contains the farm connection — only send it to your team.</p>
+    <button class="btn ghost" data-a="closeSheet">Close</button>`;
+  openSheet();
+}
 function saveSyncCfg(){Local.set('sync:config',JSON.stringify({url:sync.url,key:sync.key,room:sync.room}));}
 function setStatus(s){sync.status=s;const p=document.getElementById('syncPill');const t=document.getElementById('syncTxt');p.className='syncpill '+s;t.textContent=({synced:'Synced',syncing:'Syncing…',error:'Sync error',offline:'Offline'})[s]||s;}
 /* ===== AUTH (Supabase email/password, JWT) ===== */
@@ -749,6 +785,36 @@ async function doLogin(){
     await persistData();startPoll();mediaKick();
   }catch(e){lgError('Network error — are you online?');}
   if(btn)btn.textContent='🔐 Sign in';
+}
+let gateMode='login';
+function gateToggle(){
+  gateMode=gateMode==='login'?'signup':'login';
+  const s=gateMode==='signup';
+  const f=document.getElementById('lgP2w');if(f)f.style.display=s?'':'none';
+  const lb=document.getElementById('lgBtn');if(lb)lb.style.display=s?'none':'';
+  const sb=document.getElementById('suBtn');if(sb)sb.style.display=s?'':'none';
+  const sw=document.getElementById('gateSwap');if(sw)sw.textContent=s?'← I already have an account — sign in':'✨ First time? Create my account';
+  const er=document.getElementById('lgErr');if(er)er.style.display='none';
+}
+async function doSignup(){
+  const em=(document.getElementById('lgEmail')||{}).value||'',pw=(document.getElementById('lgPass')||{}).value||'',p2=(document.getElementById('lgPass2')||{}).value||'';
+  if(!em.trim()||!pw){lgError('Email and password required');return;}
+  if(pw.length<6){lgError('Password: at least 6 characters');return;}
+  if(pw!==p2){lgError('Passwords do not match');return;}
+  if(!sync.url||!sync.key){lgError('Open the invite link first — it carries the farm connection.');return;}
+  const btn=document.getElementById('suBtn');if(btn)btn.textContent='Creating…';
+  try{
+    const r=await fetch(`${sync.url}/auth/v1/signup`,{method:'POST',headers:{'apikey':sync.key,'Content-Type':'application/json'},body:JSON.stringify({email:em.trim(),password:pw})});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok){lgError(j.error_description||j.msg||'Sign-up failed — account may exist (try Sign in) or sign-ups are disabled.');}
+    else if(j.access_token){
+      auth.token=j.access_token;auth.refresh=j.refresh_token||'';auth.exp=Date.now()+(((j.expires_in||3600)-60)*1000);auth.email=em.trim();saveAuth();
+      hideGate();renderAuthLine();toast('🎉 Account created — welcome!');
+      await persistData();startPoll();mediaKick();
+    }
+    else{lgError('📧 Almost done — confirm via the email we sent you, then come back and Sign in.');}
+  }catch(e){lgError('Network error — are you online?');}
+  if(btn)btn.textContent='✨ Create my account';
 }
 function logout(){auth={token:'',refresh:'',exp:0,email:''};Local.set('hh:sess','{}');renderAuthLine();showGate();toast('Signed out');}
 function renderAuthLine(){
@@ -2669,7 +2735,7 @@ function exportData(){const blob=new Blob([JSON.stringify({animals,events,delete
 /* ===== CLICK DELEGATION (works inside sandboxed iframes / strict CSP) ===== */
 function toggleSop(i){var e=document.getElementById('sop'+i);if(e)e.classList.toggle('open');}
 (function(){
-  var H={openCompose:openCompose,switchView:switchView,openProfile:openProfile,openNewAnimal:openNewAnimal,saveNewAnimal:saveNewAnimal,editAnimal:editAnimal,saveEdit:saveEdit,saveEntry:saveEntry,setType:setType,delEvent:delEvent,pickPhoto:pickPhoto,toggleTask:toggleTask,resetTasks:resetTasks,setFilter:setFilter,editAlert:editAlert,saveAlert:saveAlert,resolveAlert:resolveAlert,editVet:editVet,saveVet:saveVet,delVet:delVet,openSync:openSync,copySQL:copySQL,connectSync:connectSync,disconnectSync:disconnectSync,closeSheet:closeSheet,exportData:exportData,toggleSop:toggleSop,openAddTask:openAddTask,editTask:editTask,saveTask:saveTask,delTask:delTask,setCircle:setCircle,setWho:setWho,quickWho:quickWho,saveWho:saveWho,openAddCircle:openAddCircle,editCircle:editCircle,saveCircle:saveCircle,delCircle:delCircle,openAddReminder:openAddReminder,editReminder:editReminder,saveReminder:saveReminder,doneReminder:doneReminder,delReminder:delReminder,openAddBreeding:openAddBreeding,saveBreeding:saveBreeding,markCalved:markCalved,delBreeding:delBreeding,enableNotif:enableNotif,addToCalendar:addToCalendar,enlargePhoto:enlargePhoto,setCover:setCover,delPhoto:delPhoto,openQuickCapture:openQuickCapture,qcCapture:qcCapture,qcSave:qcSave,dictate:dictate,openInbox:openInbox,quickShot:quickShot,ibAssign:ibAssign,ibDrop:ibDrop,openDuplicates:openDuplicates,mergeAnimals:mergeAnimals,toggleMic:toggleMic,goModule:goModule,openAddInv:openAddInv,editInv:editInv,saveInv:saveInv,delInv:delInv,invAdj:invAdj,openAddOrder:openAddOrder,addOrderLine:addOrderLine,removeOrderLine:removeOrderLine,saveOrder:saveOrder,orderStatus:orderStatus,delOrder:delOrder,calSelectDay:calSelectDay,openAddCalEvent:openAddCalEvent,editCalEvent:editCalEvent,saveCalEvent:saveCalEvent,delCalEvent:delCalEvent,editGoals:editGoals,saveGoals:saveGoals,openAddDefect:openAddDefect,editDefect:editDefect,saveDefect:saveDefect,fixDefect:fixDefect,delDefect:delDefect,exportPurchases:exportPurchases,openSite:openSite,editSite:editSite,saveSite:saveSite,delSite:delSite,planCollect:planCollect,sitePickPhoto:sitePickPhoto,enlargeSitePhoto:enlargeSitePhoto,delSitePhoto:delSitePhoto,refreshWeather:refreshWeather,cropConfirm:cropConfirm,cropSkip:cropSkip,ibCreateAnimal:ibCreateAnimal,editDevNote:editDevNote,saveDevNote:saveDevNote,doneDevNote:doneDevNote,delDevNote:delDevNote,planCollectOn:planCollectOn,pickDoc:pickDoc,docChoose:docChoose,viewDoc:viewDoc,delDoc:delDoc,godShot:godShot,godAssign:godAssign,godNew:godNew,godSave:godSave,estWeight:estWeight,estCalc:estCalc,estLog:estLog,mapMode:mapMode,mapSat:mapSat,mapFinishPad:mapFinishPad,openPinSheet:openPinSheet,savePin:savePin,delPin:delPin,editPad:editPad,savePad:savePad,delPad:delPad,openProject:openProject,editProject:editProject,saveProject:saveProject,delProject:delProject,projToggle:projToggle,editPTask:editPTask,savePTask:savePTask,delPTask:delPTask,ptStatus:ptStatus,logLabour:logLabour,saveLabour:saveLabour,doLogin:doLogin,logout:logout,showGate:showGate,mapViewSet:mapViewSet,mapSetBg:mapSetBg,mapCal:mapCal,mapCalSave:mapCalSave};
+  var H={openCompose:openCompose,switchView:switchView,openProfile:openProfile,openNewAnimal:openNewAnimal,saveNewAnimal:saveNewAnimal,editAnimal:editAnimal,saveEdit:saveEdit,saveEntry:saveEntry,setType:setType,delEvent:delEvent,pickPhoto:pickPhoto,toggleTask:toggleTask,resetTasks:resetTasks,setFilter:setFilter,editAlert:editAlert,saveAlert:saveAlert,resolveAlert:resolveAlert,editVet:editVet,saveVet:saveVet,delVet:delVet,openSync:openSync,copySQL:copySQL,connectSync:connectSync,disconnectSync:disconnectSync,closeSheet:closeSheet,exportData:exportData,toggleSop:toggleSop,openAddTask:openAddTask,editTask:editTask,saveTask:saveTask,delTask:delTask,setCircle:setCircle,setWho:setWho,quickWho:quickWho,saveWho:saveWho,openAddCircle:openAddCircle,editCircle:editCircle,saveCircle:saveCircle,delCircle:delCircle,openAddReminder:openAddReminder,editReminder:editReminder,saveReminder:saveReminder,doneReminder:doneReminder,delReminder:delReminder,openAddBreeding:openAddBreeding,saveBreeding:saveBreeding,markCalved:markCalved,delBreeding:delBreeding,enableNotif:enableNotif,addToCalendar:addToCalendar,enlargePhoto:enlargePhoto,setCover:setCover,delPhoto:delPhoto,openQuickCapture:openQuickCapture,qcCapture:qcCapture,qcSave:qcSave,dictate:dictate,openInbox:openInbox,quickShot:quickShot,ibAssign:ibAssign,ibDrop:ibDrop,openDuplicates:openDuplicates,mergeAnimals:mergeAnimals,toggleMic:toggleMic,goModule:goModule,openAddInv:openAddInv,editInv:editInv,saveInv:saveInv,delInv:delInv,invAdj:invAdj,openAddOrder:openAddOrder,addOrderLine:addOrderLine,removeOrderLine:removeOrderLine,saveOrder:saveOrder,orderStatus:orderStatus,delOrder:delOrder,calSelectDay:calSelectDay,openAddCalEvent:openAddCalEvent,editCalEvent:editCalEvent,saveCalEvent:saveCalEvent,delCalEvent:delCalEvent,editGoals:editGoals,saveGoals:saveGoals,openAddDefect:openAddDefect,editDefect:editDefect,saveDefect:saveDefect,fixDefect:fixDefect,delDefect:delDefect,exportPurchases:exportPurchases,openSite:openSite,editSite:editSite,saveSite:saveSite,delSite:delSite,planCollect:planCollect,sitePickPhoto:sitePickPhoto,enlargeSitePhoto:enlargeSitePhoto,delSitePhoto:delSitePhoto,refreshWeather:refreshWeather,cropConfirm:cropConfirm,cropSkip:cropSkip,ibCreateAnimal:ibCreateAnimal,editDevNote:editDevNote,saveDevNote:saveDevNote,doneDevNote:doneDevNote,delDevNote:delDevNote,planCollectOn:planCollectOn,pickDoc:pickDoc,docChoose:docChoose,viewDoc:viewDoc,delDoc:delDoc,godShot:godShot,godAssign:godAssign,godNew:godNew,godSave:godSave,estWeight:estWeight,estCalc:estCalc,estLog:estLog,mapMode:mapMode,mapSat:mapSat,mapFinishPad:mapFinishPad,openPinSheet:openPinSheet,savePin:savePin,delPin:delPin,editPad:editPad,savePad:savePad,delPad:delPad,openProject:openProject,editProject:editProject,saveProject:saveProject,delProject:delProject,projToggle:projToggle,editPTask:editPTask,savePTask:savePTask,delPTask:delPTask,ptStatus:ptStatus,logLabour:logLabour,saveLabour:saveLabour,doLogin:doLogin,logout:logout,showGate:showGate,mapViewSet:mapViewSet,mapSetBg:mapSetBg,mapCal:mapCal,mapCalSave:mapCalSave,inviteDevice:inviteDevice,gateToggle:gateToggle,doSignup:doSignup};
   document.addEventListener('click',function(e){
     var t=e.target; var el=t&&t.closest?t.closest('[data-a]'):null;
     if(!el)return;
@@ -2685,10 +2751,13 @@ function toggleSop(i){var e=document.getElementById('sop'+i);if(e)e.classList.to
 
 /* ===== INIT ===== */
 (async function(){
+  const gotCfg=applyCfgFromHash();
   loadSyncCfg();loadAuth();setStatus(sync.on?'syncing':'offline');
+  if(gotCfg)toast('✅ Farm configuration received — sign in below');
   mediaInit();await hydrateMedia();
   if(sync.on&&!authed())showGate();
-  const lp=document.getElementById('lgPass');if(lp)lp.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+  const lp=document.getElementById('lgPass');if(lp)lp.addEventListener('keydown',e=>{if(e.key==='Enter'){gateMode==='signup'?doSignup():doLogin();}});
+  const lp2=document.getElementById('lgPass2');if(lp2)lp2.addEventListener('keydown',e=>{if(e.key==='Enter')doSignup();});
   const mb=document.getElementById('mapBgFile');if(mb)mb.addEventListener('change',onMapBg);
   let s=await Store.get('state:v2');
   if(s){try{applyState(JSON.parse(s));}catch(e){}}
