@@ -664,9 +664,10 @@ const SEED_ALERTS=[{id:'al1',animal:'Whole herd',sev:'high',prob:'Grain silo / m
 const TYPES={note:{e:'📝',l:'Note'},health:{e:'🏥',l:'Health'},feed:{e:'🍼',l:'Feeding'},treatment:{e:'💊',l:'Treatment'},weight:{e:'⚖️',l:'Weight'},tag:{e:'🏷️',l:'Tag'},milestone:{e:'✨',l:'Milestone'},arrival:{e:'🐣',l:'Arrival'},removal:{e:'📤',l:'Removed'}};
 
 /* ===== VET / PROTOCOL DATA ===== */
-const APP_VERSION='8.0';
+const APP_VERSION='8.1';
 const APP_STAGE='Stable — ready to deploy';
 const CHANGELOG=[
+  {v:'8.1',d:'Jun 2026',c:'⏫ Ledger replicator: the local bio-data ledger drains to a server-side append-only bio_ledger table (insert-only RLS — immutable in the cloud too). Idempotent, offline-resilient, auto-triggered.'},
   {v:'8.0',d:'Jun 2026',c:'🛒 Animal market: network-wide listings between partner farms — publish an animal (photo, price, contact), browse, call the seller, mark sold. White-label farm names on every listing.'},
   {v:'7.9',d:'Jun 2026',c:'🐴 Equestrian partner portal: dedicated invite from the site sheet — the partner\'s device opens on a simple manure/litter portal (report level, message the farm) over the shared bridge.'},
   {v:'7.8',d:'Jun 2026',c:'🩺 Vet portal: dedicated vet invite link (role-carrying) — the vet\'s device opens straight on their portal: at-risk patients, active withdrawals, recent treatments, one-tap visit logging.'},
@@ -2683,6 +2684,7 @@ async function ledgerLog(kind,refId,eventType,obsData,actor,opts){
     await mdb.bioEvents.add({id:evId,assetId,type:eventType,ts:now,by:who,observationIds:obsIds,supersedes:(opts&&opts.supersedes)||null,schema:1});
     await mdb.eventLog.add({id:ulid(),ts:now,actor:who,action:'BIO_EVENT',entity:evId,assetId,type:eventType});
     await mdb.syncOutbox.add({id:evId,ts:now,kind:'bioEvent'});
+    setTimeout(()=>{try{ledgerKick();}catch(e){}},50);
     return evId;
   }catch(e){return null;}
 }
@@ -2694,6 +2696,29 @@ async function ledgerStats(){
     return {obs:await mdb.observations.count(),events:await mdb.bioEvents.count(),log:await mdb.eventLog.count()};
   }catch(e){return null;}
 }
+/* ===== LEDGER REPLICATOR — drain syncOutbox → Supabase bio_ledger (append-only) ===== */
+let ledgerBusy=false;
+async function ledgerKick(){
+  mediaInit();
+  if(ledgerBusy||!mdb||!mdb.syncOutbox||!sync.on||!navigator.onLine)return;
+  ledgerBusy=true;
+  try{
+    const jobs=await mdb.syncOutbox.limit(5).toArray();
+    for(const j of jobs){
+      try{
+        const ev=await mdb.bioEvents.get(j.id);
+        if(!ev){await mdb.syncOutbox.delete(j.id);continue;}
+        const obs=await mdb.observations.where('id').anyOf(ev.observationIds||[]).toArray();
+        const r=await API.req(`${sync.url}/rest/v1/bio_ledger`,{method:'POST',extra:{'Prefer':'resolution=merge-duplicates'},body:JSON.stringify({id:ev.id,room:sync.room,type:ev.type,ts:ev.ts,data:{event:ev,observations:obs}})});
+        if(!r.ok)throw new Error('ledger push '+r.status);
+        await mdb.syncOutbox.delete(j.id);
+      }catch(e){break;}
+    }
+  }catch(e){}
+  ledgerBusy=false;
+}
+window.addEventListener('online',()=>ledgerKick());
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)ledgerKick();});
 async function exportLedger(){
   try{
     mediaInit();if(!mdb||!mdb.observations){toast('Ledger not available on this device');return;}
@@ -2709,7 +2734,8 @@ async function exportLedger(){
 async function renderLedgerLine(){
   const el=document.getElementById('ledgerLine');if(!el)return;
   const s=await ledgerStats();
-  el.innerHTML=s?`📒 Bio-data ledger: <b>${s.obs}</b> immutable observations · ${s.events} events on this device`:'📒 Bio-data ledger: not supported by this browser';
+  let pend=0;try{pend=await mdb.syncOutbox.count();}catch(e){}
+  el.innerHTML=s?`📒 Bio-data ledger: <b>${s.obs}</b> immutable observations · ${s.events} events${pend?` · ⏫ ${pend} pending replication`:' · ☁️ replicated'}`:'📒 Bio-data ledger: not supported by this browser';
 }
 function dataURLtoBlob(d){const pr=d.split(',');const mime=(pr[0].match(/data:(.*?);/)||[])[1]||'image/jpeg';const bin=atob(pr[1]);const arr=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);return new Blob([arr],{type:mime});}
 function makeThumb(dataURL,cb){
@@ -3088,6 +3114,7 @@ function toggleSop(i){var e=document.getElementById('sop'+i);if(e)e.classList.to
   if(isVet()){goModule('vet');}
   renderPartnerPortal();
   mediaKick();setInterval(mediaKick,20000);
+  ledgerKick();setInterval(ledgerKick,25000);
   checkDue(); setInterval(checkDue,60000);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden){checkDue();if(sync.on){API.pull().then(remote=>{if(remote){const before=JSON.stringify(curState());applyState(mergeStates(curState(),remote));if(JSON.stringify(curState())!==before){Store.set('state:v2',JSON.stringify(curState()));renderFeed();renderHerd();}setStatus('synced');}}).catch(()=>setStatus('error'));}}});
 })();
