@@ -443,6 +443,15 @@
     <div id="godInc" class="god-grid"></div>
   </section>
 
+  <section class="view" id="v-market">
+    <div class="vh">🛒 Animal market</div>
+    <div class="vsub">Listings from the farm network — buy & sell between trusted partners.</div>
+    <button class="btn clay" data-a="openSellSheet">＋ List one of my animals for sale</button>
+    <button class="btn ghost" data-a="marketRefresh" style="margin-bottom:12px">🔄 Refresh listings</button>
+    <div id="marketList"><p class="lead">Loading…</p></div>
+    <button class="btn ghost" data-a="switchView" data-p="herd" style="margin-top:10px">‹ Back to the herd</button>
+  </section>
+
   <section class="view" id="v-map">
     <div class="vh">🗺️ Property map</div>
     <div class="vsub">Birdview of the farm — paddocks, gates, water & buildings. Synced for everyone.</div>
@@ -474,6 +483,7 @@
   </section>
 
   <section class="view active" id="v-feed">
+    <div id="partnerPortal"></div>
     <div class="vh">🌾 Herd Feed</div>
     <div class="vsub" id="feedSub">Everything happening across your herd</div>
     <div class="stats">
@@ -490,7 +500,8 @@
     <div class="vh">🐄 The Herd</div>
     <div class="vsub" id="herdSub">Tap an animal to open its profile</div>
     <button class="add-animal-btn" data-a="openNewAnimal">＋ Add a new animal</button>
-    <div class="row2" style="margin-bottom:12px"><button class="btn clay" data-a="openQuickCapture">⚡ Quick capture</button><button class="btn" data-a="openInbox" id="inboxBtn">📥 Inbox</button></div>
+    <div class="row2" style="margin-bottom:12px"><button class="btn clay" data-a="openQuickCapture">⚡ Quick capture</button>
+    <button class="btn" data-a="switchView" data-p="market">🛒 Animal market</button><button class="btn" data-a="openInbox" id="inboxBtn">📥 Inbox</button></div>
     <button class="btn ghost" data-a="switchView" data-p="god" style="margin-bottom:12px">🖥️ GOD MODE — bulk classify (desktop)</button>
     <input class="search" id="search" placeholder="🔍  Search by name or tag…">
     <div class="filters" id="filters"></div>
@@ -517,6 +528,7 @@
   <section class="view" id="v-vet">
     <div class="vh">🩺 EquiLumina</div>
     <div class="vsub">Vet & breeding — reminders, treatments & guides</div>
+    <div id="vetPortal"></div>
     <div class="seclabel">⏰ Upcoming reminders</div>
     <div id="remindersList"></div>
     <button class="btn" data-a="openAddReminder" style="margin:2px 0 8px;">＋ Add a reminder</button>
@@ -545,7 +557,10 @@
     <div id="syncStatusBox"></div>
     <button class="btn" data-a="openSync" style="margin-bottom:9px;">🔗 Set up / manage sync</button>
     <button class="btn" data-a="inviteDevice" style="margin-bottom:9px;">📲 Invite a device (one-tap setup)</button>
-    <div id="authLine" style="margin-bottom:16px"></div>
+    <button class="btn" data-a="openFarmProfile" style="margin-bottom:9px;">🏷️ Farm profile (name, location, weather)</button>
+    <div id="authLine" style="margin-bottom:9px"></div>
+    <div id="ledgerLine" class="lead" style="font-size:11px;margin-bottom:7px"></div>
+    <button class="btn ghost" data-a="exportLedger" style="margin-bottom:16px;">📒 Export bio-data ledger (JSON)</button>
     <div class="seclabel">Site</div>
     <div class="info-card">
       <div class="info-row"><span class="k">Farm</span><span class="v">GNR Shefford</span></div>
@@ -649,9 +664,15 @@ const SEED_ALERTS=[{id:'al1',animal:'Whole herd',sev:'high',prob:'Grain silo / m
 const TYPES={note:{e:'📝',l:'Note'},health:{e:'🏥',l:'Health'},feed:{e:'🍼',l:'Feeding'},treatment:{e:'💊',l:'Treatment'},weight:{e:'⚖️',l:'Weight'},tag:{e:'🏷️',l:'Tag'},milestone:{e:'✨',l:'Milestone'},arrival:{e:'🐣',l:'Arrival'},removal:{e:'📤',l:'Removed'}};
 
 /* ===== VET / PROTOCOL DATA ===== */
-const APP_VERSION='7.4';
+const APP_VERSION='8.0';
 const APP_STAGE='Stable — ready to deploy';
 const CHANGELOG=[
+  {v:'8.0',d:'Jun 2026',c:'🛒 Animal market: network-wide listings between partner farms — publish an animal (photo, price, contact), browse, call the seller, mark sold. White-label farm names on every listing.'},
+  {v:'7.9',d:'Jun 2026',c:'🐴 Equestrian partner portal: dedicated invite from the site sheet — the partner\'s device opens on a simple manure/litter portal (report level, message the farm) over the shared bridge.'},
+  {v:'7.8',d:'Jun 2026',c:'🩺 Vet portal: dedicated vet invite link (role-carrying) — the vet\'s device opens straight on their portal: at-risk patients, active withdrawals, recent treatments, one-tap visit logging.'},
+  {v:'7.7',d:'Jun 2026',c:'🔗 Partner bridge: partner farms (equestrian, biomass, suppliers) run their own GNR Suite and the two platforms connect — live litter level + shared notes per partnership. Typed partner sites (🐴 equestrian, 🩺 vet clinic, 🚜 supplier).'},
+  {v:'7.6',d:'Jun 2026',c:'🏷️ Farm profile (white-label): configurable farm name, address, premise #, GPS position (drives weather predictions + map) — one deployment now serves any Québec farm. GNR Shefford stays the default.'},
+  {v:'7.5',d:'Jun 2026',c:'📒 Bio-data ledger V3 (engine): ULID ids, immutable append-only observations + biological events + event log (engine-level update/delete guards), corrections via supersedes, sync outbox for future replication, JSON export. Auto-fed by treatments/weights/labour — zero workflow change.'},
   {v:'7.4',d:'Jun 2026',c:'✨ Self-service accounts: invited people create their own password right on the sign-in screen — no admin needed.'},
   {v:'7.3',d:'Jun 2026',c:'📲 One-tap device invite: share a setup link by text — the receiving phone auto-configures the farm connection, only the password is asked.'},
   {v:'7.2',d:'Jun 2026',c:'🛩️ Offline drone map: import your own drone shot as the map background (L.CRS.Simple, stored in the local vault — loads with zero internet). Own pins & paddocks per view, 📏 two-point scale calibration brings back real m²/ha areas. GPS/satellite view kept side-by-side.'},
@@ -698,17 +719,17 @@ const VAX={status:'Not yet documented',note:'No herd vaccination records on file
 
 
 /* ===== STATE ===== */
-let animals=[],events=[],deleted=[],alerts=[],vets=[],tasks=[],circles=[],reminders=[],breedings=[],taskHistory=[],inbox=[],inventory=[],orders=[],calEvents=[],dayPlans=[],defects=[],sites=[],devNotes=[],farmDocs=[],mapPins=[],paddocks=[],projects=[],pTasks=[],labour=[],mapCfg=null,taskState={};
+let animals=[],events=[],deleted=[],alerts=[],vets=[],tasks=[],circles=[],reminders=[],breedings=[],taskHistory=[],inbox=[],inventory=[],orders=[],calEvents=[],dayPlans=[],defects=[],sites=[],devNotes=[],farmDocs=[],mapPins=[],paddocks=[],projects=[],pTasks=[],labour=[],mapCfg=null,farmProfile=null,taskState={};
 const todayKey=()=>{const d=new Date();return `tasks:${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;};
-function curState(){return {animals,events,deleted,alerts,vets,tasks,circles,reminders,breedings,taskHistory,inbox,inventory,orders,calEvents,dayPlans,defects,sites,devNotes,farmDocs,mapPins,paddocks,projects,pTasks,labour,mapCfg};}
-function applyState(s){if(s.animals)animals=s.animals;if(s.events)events=s.events;if(s.deleted)deleted=s.deleted;if(s.alerts)alerts=s.alerts;if(s.vets)vets=s.vets;if(s.tasks)tasks=s.tasks;if(s.circles)circles=s.circles;if(s.reminders)reminders=s.reminders;if(s.breedings)breedings=s.breedings;if(s.taskHistory)taskHistory=s.taskHistory;if(s.inbox)inbox=s.inbox;if(s.inventory)inventory=s.inventory;if(s.orders)orders=s.orders;if(s.calEvents)calEvents=s.calEvents;if(s.dayPlans)dayPlans=s.dayPlans;if(s.defects)defects=s.defects;if(s.sites)sites=s.sites;if(s.devNotes)devNotes=s.devNotes;if(s.farmDocs)farmDocs=s.farmDocs;if(s.mapPins)mapPins=s.mapPins;if(s.paddocks)paddocks=s.paddocks;if(s.projects)projects=s.projects;if(s.pTasks)pTasks=s.pTasks;if(s.labour)labour=s.labour;if(s.mapCfg)mapCfg=s.mapCfg;}
+function curState(){return {animals,events,deleted,alerts,vets,tasks,circles,reminders,breedings,taskHistory,inbox,inventory,orders,calEvents,dayPlans,defects,sites,devNotes,farmDocs,mapPins,paddocks,projects,pTasks,labour,mapCfg,farmProfile};}
+function applyState(s){if(s.animals)animals=s.animals;if(s.events)events=s.events;if(s.deleted)deleted=s.deleted;if(s.alerts)alerts=s.alerts;if(s.vets)vets=s.vets;if(s.tasks)tasks=s.tasks;if(s.circles)circles=s.circles;if(s.reminders)reminders=s.reminders;if(s.breedings)breedings=s.breedings;if(s.taskHistory)taskHistory=s.taskHistory;if(s.inbox)inbox=s.inbox;if(s.inventory)inventory=s.inventory;if(s.orders)orders=s.orders;if(s.calEvents)calEvents=s.calEvents;if(s.dayPlans)dayPlans=s.dayPlans;if(s.defects)defects=s.defects;if(s.sites)sites=s.sites;if(s.devNotes)devNotes=s.devNotes;if(s.farmDocs)farmDocs=s.farmDocs;if(s.mapPins)mapPins=s.mapPins;if(s.paddocks)paddocks=s.paddocks;if(s.projects)projects=s.projects;if(s.pTasks)pTasks=s.pTasks;if(s.labour)labour=s.labour;if(s.mapCfg)mapCfg=s.mapCfg;if(s.farmProfile)farmProfile=s.farmProfile;}
 function mergeById(a,b){const m={};(b||[]).forEach(x=>m[x.id]=x);(a||[]).forEach(x=>{const ex=m[x.id];if(!ex||(x._u||0)>=(ex._u||0))m[x.id]=x;});return Object.values(m);}
 function mergeStates(a,b){
   const del=Array.from(new Set([...(a.deleted||[]),...(b.deleted||[])]));
   const em={};[...(b.events||[]),...(a.events||[])].forEach(e=>{em[e.id]=e;});
   const evs=Object.values(em).filter(e=>!del.includes(e.id));
   const animalsM=mergeById(a.animals,b.animals).filter(x=>!del.includes('animal:'+x.id));
-  return {animals:animalsM,events:evs,deleted:del,alerts:mergeById(a.alerts,b.alerts),vets:mergeById(a.vets,b.vets),tasks:mergeById(a.tasks,b.tasks),circles:mergeById(a.circles,b.circles),reminders:mergeById(a.reminders,b.reminders),breedings:mergeById(a.breedings,b.breedings),taskHistory:mergeById(a.taskHistory,b.taskHistory),inbox:mergeById(a.inbox,b.inbox).filter(x=>!x._d),inventory:mergeById(a.inventory,b.inventory),orders:mergeById(a.orders,b.orders),calEvents:mergeById(a.calEvents,b.calEvents),dayPlans:mergeById(a.dayPlans,b.dayPlans),defects:mergeById(a.defects,b.defects),sites:mergeById(a.sites,b.sites),devNotes:mergeById(a.devNotes,b.devNotes),farmDocs:mergeById(a.farmDocs,b.farmDocs),mapPins:mergeById(a.mapPins,b.mapPins),paddocks:mergeById(a.paddocks,b.paddocks),projects:mergeById(a.projects,b.projects),pTasks:mergeById(a.pTasks,b.pTasks),labour:mergeById(a.labour,b.labour),mapCfg:((a.mapCfg&&b.mapCfg)?(((a.mapCfg._u||0)>=(b.mapCfg._u||0))?a.mapCfg:b.mapCfg):(a.mapCfg||b.mapCfg||null))};
+  return {animals:animalsM,events:evs,deleted:del,alerts:mergeById(a.alerts,b.alerts),vets:mergeById(a.vets,b.vets),tasks:mergeById(a.tasks,b.tasks),circles:mergeById(a.circles,b.circles),reminders:mergeById(a.reminders,b.reminders),breedings:mergeById(a.breedings,b.breedings),taskHistory:mergeById(a.taskHistory,b.taskHistory),inbox:mergeById(a.inbox,b.inbox).filter(x=>!x._d),inventory:mergeById(a.inventory,b.inventory),orders:mergeById(a.orders,b.orders),calEvents:mergeById(a.calEvents,b.calEvents),dayPlans:mergeById(a.dayPlans,b.dayPlans),defects:mergeById(a.defects,b.defects),sites:mergeById(a.sites,b.sites),devNotes:mergeById(a.devNotes,b.devNotes),farmDocs:mergeById(a.farmDocs,b.farmDocs),mapPins:mergeById(a.mapPins,b.mapPins),paddocks:mergeById(a.paddocks,b.paddocks),projects:mergeById(a.projects,b.projects),pTasks:mergeById(a.pTasks,b.pTasks),labour:mergeById(a.labour,b.labour),mapCfg:((a.mapCfg&&b.mapCfg)?(((a.mapCfg._u||0)>=(b.mapCfg._u||0))?a.mapCfg:b.mapCfg):(a.mapCfg||b.mapCfg||null)),farmProfile:((a.farmProfile&&b.farmProfile)?(((a.farmProfile._u||0)>=(b.farmProfile._u||0))?a.farmProfile:b.farmProfile):(a.farmProfile||b.farmProfile||null))};
 }
 
 /* ===== SYNC (Supabase REST + polling) ===== */
@@ -722,14 +743,22 @@ function applyCfgFromHash(){
     const c=JSON.parse(atob(m[1].replace(/-/g,'+').replace(/_/g,'/')));
     if(!c.u||!c.k)return false;
     Local.set('sync:config',JSON.stringify({url:c.u,key:c.k,room:c.r||'gnr-shefford'}));
+    if(c.role)Local.set('hh:role',c.role);
+    if(c.host){Local.set('hh:phost',c.host);Local.set('hh:phn',c.hn||c.host);}
     try{history.replaceState(null,'',location.pathname);}catch(e){location.hash='';}
     return true;
   }catch(e){return false;}
 }
-function inviteLink(){
+function inviteLink(role){
   if(!sync.on)return'';
-  const b=btoa(JSON.stringify({u:sync.url,k:sync.key,r:sync.room})).replace(/\+/g,'-').replace(/\//g,'_');
+  const o={u:sync.url,k:sync.key,r:sync.room};if(role)o.role=role;
+  const b=btoa(JSON.stringify(o)).replace(/\+/g,'-').replace(/\//g,'_');
   return location.origin+location.pathname+'#cfg='+b;
+}
+async function inviteVet(){
+  const link=inviteLink('Vet');if(!link){toast('Configure sync first');return;}
+  try{await navigator.clipboard.writeText(link);toast('🩺 Vet invite link copied — text it to your vet');}
+  catch(e){const ta=document.getElementById('plVetLk');if(ta){ta.style.display='block';ta.value=link;}toast('🩺 Copy the link below');}
 }
 async function inviteDevice(){
   const link=inviteLink();
@@ -740,6 +769,8 @@ async function inviteDevice(){
   document.getElementById('sheet').innerHTML=`<div class="grab"></div><h3>📲 Invite a device</h3>
     <p class="lead">Send this link to Jessica or Paul. They tap it, add to home screen, type their password — done. No manual setup.</p>
     <textarea class="field" style="height:110px;font-size:11px" readonly>${esc(link)}</textarea>
+    <button class="btn" data-a="inviteVet">🩺 Copy a VET invite link (opens on their portal)</button>
+    <textarea class="field" id="plVetLk" style="height:70px;font-size:11px;display:none" readonly></textarea>
     <p class="lead" style="font-size:11px">⚠️ This link contains the farm connection — only send it to your team.</p>
     <button class="btn ghost" data-a="closeSheet">Close</button>`;
   openSheet();
@@ -1333,11 +1364,11 @@ async function initDrone(){
 }
 function initMap(){
   if(mapObj||typeof L==='undefined'||!document.getElementById('mapBox'))return;
-  mapObj=L.map('mapBox').setView([FARM_LAT,FARM_LON],16);
+  mapObj=L.map('mapBox').setView([farmLat(),farmLon()],16);
   const sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Imagery © Esri'});
   const osm=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'});
   sat.addTo(mapObj);mapObj._sat=sat;mapObj._osm=osm;
-  L.marker([FARM_LAT,FARM_LON]).addTo(mapObj).bindPopup('🏡 GNR Shefford — 36 ch. Bell');
+  L.marker([farmLat(),farmLon()]).addTo(mapObj).bindPopup('🏡 '+esc(farmName())+((farmProfile&&farmProfile.address)?' — '+esc(farmProfile.address):' — 36 ch. Bell'));
   mapLayer=L.layerGroup().addTo(mapObj);
   mapObj.on('click',e=>onMapClick(e.latlng));
 }
@@ -1604,7 +1635,42 @@ async function saveLabour(taskId){
   const t=pTasks.find(x=>x.id===taskId);if(!t)return;
   const hrs=parseFloat(document.getElementById('lbH').value);if(!hrs||hrs<=0){toast('Enter the hours');return;}
   labour.push({id:'lb'+Date.now(),taskId,projectId:t.projectId,by:document.getElementById('lbWho').value.trim()||signature(),hours:hrs,note:document.getElementById('lbN').value.trim(),ts:Date.now(),_u:Date.now(),_d:false});
+  try{ledgerLog('project',t.projectId,'labour',{taskId,hours:hrs},document.getElementById('lbWho').value.trim()||signature());}catch(e){}
   await persistData();renderTasks();openProject(t.projectId);toast('⏱ +'+hrs+' h');
+}
+
+/* ===== FARM PROFILE (white-label, synced) ===== */
+function openFarmProfile(){
+  const f=farmProfile||{};
+  document.getElementById('sheet').innerHTML=`<div class="grab"></div><h3>🏷️ Farm profile</h3>
+    <p class="lead">This farm's identity — name, location (drives the weather predictions), site number. Synced to every device.</p>
+    <label class="fl">Farm name</label><input class="field" id="fpName" value="${esc(f.name||'GNR Shefford')}">
+    <label class="fl">Address</label><input class="field" id="fpAddr" value="${esc(f.address||'36 chemin Bell, Shefford QC')}">
+    <label class="fl">Premise / site # (ATQ)</label><input class="field" id="fpPrem" value="${esc(f.premise||'QC0400358')}">
+    <div class="row2"><div><label class="fl">Latitude</label><input class="field" id="fpLat" inputmode="decimal" value="${f.lat||FARM_LAT}"></div><div><label class="fl">Longitude</label><input class="field" id="fpLon" inputmode="decimal" value="${f.lon||FARM_LON}"></div></div>
+    <button class="btn ghost" data-a="fpLocate">📍 Use my current position</button>
+    <button class="btn clay" data-a="saveFarmProfile">Save profile</button>
+    <button class="btn ghost" data-a="closeSheet">Cancel</button>`;
+  openSheet();
+}
+function fpLocate(){
+  if(!navigator.geolocation){toast('Geolocation unavailable');return;}
+  toast('📍 Locating…');
+  navigator.geolocation.getCurrentPosition(p=>{
+    const la=document.getElementById('fpLat'),lo=document.getElementById('fpLon');
+    if(la)la.value=Math.round(p.coords.latitude*100000)/100000;
+    if(lo)lo.value=Math.round(p.coords.longitude*100000)/100000;
+    toast('📍 Position set');
+  },()=>toast('Could not get position'),{enableHighAccuracy:true,timeout:8000});
+}
+async function saveFarmProfile(){
+  const name=document.getElementById('fpName').value.trim();
+  if(!name){toast('Name the farm');return;}
+  farmProfile={name,address:document.getElementById('fpAddr').value.trim(),premise:document.getElementById('fpPrem').value.trim(),
+    lat:parseFloat(document.getElementById('fpLat').value)||FARM_LAT,lon:parseFloat(document.getElementById('fpLon').value)||FARM_LON,_u:Date.now()};
+  try{Local.remove?Local.remove('hh:wx'):localStorage.removeItem('hh:wx');}catch(e){try{localStorage.removeItem('hh:wx');}catch(e2){}}
+  await persistData();closeSheet();updateBrand();renderCal&&renderCal();
+  toast('🏷️ '+name+' — profile saved everywhere');
 }
 
 /* ===== DEV NOTES (bugs & ideas, synced) ===== */
@@ -1639,6 +1705,9 @@ function goModule(m){
 
 /* ===== WEATHER + NEEDS PREDICTION (Shefford QC) ===== */
 const FARM_LAT=45.355,FARM_LON=-72.591;
+function farmName(){return (farmProfile&&farmProfile.name)||'GNR Shefford';}
+function farmLat(){const v=farmProfile&&parseFloat(farmProfile.lat);return (v||v===0)&&isFinite(v)?v:FARM_LAT;}
+function farmLon(){const v=farmProfile&&parseFloat(farmProfile.lon);return (v||v===0)&&isFinite(v)?v:FARM_LON;}
 let weatherDays=null,weatherLoading=false,weatherError=false;
 function pregStats(){
   const now=Date.now();let lastTri=0,dueSoon=[];
@@ -1672,7 +1741,7 @@ async function loadWeather(force){
   if(typeof fetch==='undefined')return;
   weatherLoading=true;weatherError=false;
   try{
-    const u=`https://api.open-meteo.com/v1/forecast?latitude=${FARM_LAT}&longitude=${FARM_LON}&daily=apparent_temperature_max,apparent_temperature_min,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum&timezone=America%2FToronto&forecast_days=7`;
+    const u=`https://api.open-meteo.com/v1/forecast?latitude=${farmLat()}&longitude=${farmLon()}&daily=apparent_temperature_max,apparent_temperature_min,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum&timezone=America%2FToronto&forecast_days=7`;
     const r=await fetch(u);if(!r.ok)throw new Error('wx '+r.status);
     const j=await r.json();const dd=j.daily;
     weatherDays=(dd.time||[]).map((date,i)=>({date,appMax:dd.apparent_temperature_max[i],appMin:dd.apparent_temperature_min[i],tmax:dd.temperature_2m_max[i],tmin:dd.temperature_2m_min[i],precip:dd.precipitation_sum[i]||0,snow:dd.snowfall_sum[i]||0}));
@@ -1707,9 +1776,152 @@ function renderSites(){
   const list=sites.filter(s=>!s._d).sort((a,b)=>a.name.localeCompare(b.name));
   box.innerHTML=list.length?list.map(s=>{
     const hist=siteCollections(s.id); const last=hist[0];
-    const th=(s.photos&&s.photos[0])?`<div class="pav photo" style="background-image:url('${photoSrc(s.photos[0])}')"></div>`:`<div class="pav">🤝</div>`;
+    const th=(s.photos&&s.photos[0])?`<div class="pav photo" style="background-image:url('${photoSrc(s.photos[0])}')"></div>`:`<div class="pav">${SITE_EMO[s.type||'biomass']}</div>`;
     return `<div class="a-card"><div class="a-main" data-a="openSite" data-p="${s.id}">${th}<div class="a-info"><div class="a-name">${esc(s.name)}</div><div class="a-meta">${s.contact?esc(s.contact)+' · ':''}${last?'Last collect: '+last.date:'No collection yet'}</div></div><div style="color:var(--ink2);font-size:20px">›</div></div></div>`;
   }).join(''):'<div class="empty" style="padding:14px"><span class="big">🤝</span>No partner sites yet. Add the farms you collect litter from.</div>';
+}
+/* ===== PARTNER BRIDGE — two platforms, one shared channel ===== */
+const SITE_EMO={biomass:'🌾',equestrian:'🐴',vetclinic:'🩺',supplier:'🚜',other:'🤝'};
+function bridgeId(a,b){return 'link:'+[String(a||'').toLowerCase(),String(b||'').toLowerCase()].sort().join('+');}
+async function bridgeGet(room){
+  const r=await API.req(`${sync.url}/rest/v1/herd_state?room=eq.${encodeURIComponent(room)}&select=data`);
+  if(!r.ok)throw new Error('bridge '+r.status);
+  const rows=await r.json();return rows&&rows[0]?rows[0].data:null;
+}
+async function bridgeSet(room,data){
+  const r=await API.req(`${sync.url}/rest/v1/herd_state`,{method:'POST',extra:{'Prefer':'resolution=merge-duplicates'},body:JSON.stringify({room,data,updated_at:new Date().toISOString()})});
+  if(!r.ok)throw new Error('bridge '+r.status);
+}
+async function loadBridge(siteId){
+  const s=siteById(siteId);const box=document.getElementById('plinkBox');
+  if(!s||!s.linkRoom||!box)return;
+  if(!sync.on){box.innerHTML='<p class="lead">🔗 Partner link needs sync + sign-in.</p>';return;}
+  box.innerHTML='<p class="lead">🔗 Connecting to partner platform…</p>';
+  try{
+    const room=bridgeId(sync.room,s.linkRoom);
+    const d=(await bridgeGet(room))||{};
+    const lv=d.litter||'—';
+    const notes=(d.notes||[]).slice(-5).reverse();
+    box.innerHTML=`<div class="stat-line ${lv==='full'||lv==='overflow'?'warn':'ok'}"><span>🛏️</span> Partner litter level: <b style="margin-left:4px">${lv==='—'?'not reported yet':esc(lv)}</b>${d.litterBy?` <span style="font-size:10px;color:var(--ink2)">· ${esc(d.litterBy)} ${d.litterAt?new Date(d.litterAt).toLocaleString('en-CA',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):''}</span>`:''}</div>
+      <div class="row2" style="margin:8px 0"><select class="field" id="plLv" style="margin:0"><option value="low">Low</option><option value="half">Half</option><option value="full" ${lv==='full'?'selected':''}>Full — ready</option><option value="overflow">Overflowing</option></select><button class="btn" data-a="plinkLitter" data-p="${siteId}" style="margin:0">Report my level</button></div>
+      ${notes.length?`<div class="seclabel" style="margin-top:10px">💬 Shared notes</div>`+notes.map(n=>`<div class="pl" style="padding:7px 2px"><span class="k">${esc(n.t)}</span><span class="v" style="font-size:10px">${esc(n.by||'')}</span></div>`).join(''):''}
+      <div class="row2" style="margin-top:8px"><input class="field" id="plNote" style="margin:0" placeholder="Message to partner…"><button class="btn" data-a="plinkNote" data-p="${siteId}" style="margin:0">Send</button></div>
+      <button class="btn ghost" data-a="plinkRefresh" data-p="${siteId}" style="margin-top:8px">🔄 Refresh</button>`;
+  }catch(e){box.innerHTML='<p class="lead">🔗 Partner platform unreachable — check internet / their farm code.</p>';}
+}
+function plinkRefresh(siteId){loadBridge(siteId);}
+async function invitePartner(siteId){
+  const s=siteById(siteId);if(!s||!s.linkRoom||!sync.on){toast('Set the partner code + sync first');return;}
+  const o={u:sync.url,k:sync.key,r:s.linkRoom,role:'Partner',host:sync.room,hn:farmName()};
+  const link=location.origin+location.pathname+'#cfg='+btoa(JSON.stringify(o)).replace(/\+/g,'-').replace(/\//g,'_');
+  try{await navigator.clipboard.writeText(link);toast('🐴 Partner portal link copied — text it to '+s.name);}
+  catch(e){toast('Copy failed — long-press to copy: '+link.slice(0,40)+'…');}
+}
+/* ===== PARTNER (EQUESTRIAN) PORTAL — manure/litter side ===== */
+function pHost(){return Local.get('hh:phost')||'';}
+/* ===== ANIMAL MARKET — shared network room ===== */
+const MARKET_ROOM='market:reseau';
+async function renderMarket(){
+  const box=document.getElementById('marketList');if(!box)return;
+  if(!sync.on){box.innerHTML='<p class="lead">The market needs sync + sign-in.</p>';return;}
+  box.innerHTML='<p class="lead">Loading…</p>';
+  try{
+    const d=(await bridgeGet(MARKET_ROOM))||{};
+    const ls=(d.listings||[]).filter(x=>x.status==='active').sort((a,b)=>(b.ts||0)-(a.ts||0));
+    box.innerHTML=ls.length?ls.map(l=>{
+      const mine=l.room===sync.room;
+      return `<div class="proto ${mine?'active':''}"><div class="proto-h">${l.photo?`<div class="pav photo" style="background-image:url('${l.photo}')"></div>`:`<span class="pe">${l.emoji||'🐄'}</span>`}<b>${esc(l.name)}${l.tag?' #'+esc(l.tag):''}</b><span class="who">${esc(l.price||'')}</span></div><div class="proto-body">
+        <div class="pl"><span class="k">${esc([l.cat,l.breed,l.sex,l.age].filter(Boolean).join(' · '))}${l.weight?' · '+esc(l.weight):''}</span></div>
+        ${l.note?`<div class="pl"><span class="k" style="color:var(--ink2)">${esc(l.note)}</span></div>`:''}
+        <div class="pl"><span class="k">🏷️ ${esc(l.farm||'')}</span><span class="v">${mine?'<span class="sev med">my listing</span>':''}</span></div>
+        ${mine?`<div class="row2" style="margin-top:8px"><button class="btn" data-a="marketSold" data-p="${l.id}" style="margin:0">✅ Mark sold</button><button class="btn ghost" data-a="marketRemove" data-p="${l.id}" style="margin:0">🗑 Remove</button></div>`:(l.phone?`<a class="btn" style="display:block;text-align:center;text-decoration:none;margin-top:8px" href="tel:${esc(l.phone)}">📞 Call ${esc(l.farm||'the seller')}</a>`:'')}
+      </div></div>`;
+    }).join(''):'<div class="empty" style="padding:18px"><span class="big">🛒</span>No active listings in the network yet — be the first.</div>';
+  }catch(e){box.innerHTML='<p class="lead">Market unreachable — check internet / sign-in.</p>';}
+}
+function marketRefresh(){renderMarket();}
+function openSellSheet(){
+  const mine=animals.filter(a=>!a._d);
+  document.getElementById('sheet').innerHTML=`<div class="grab"></div><h3>🛒 List an animal</h3>
+    <label class="fl">Animal</label><select class="field" id="mkA">${mine.map(a=>`<option value="${a.id}">${a.emoji||'🐄'} ${esc(a.name)}${a.tag?' #'+a.tag:''}</option>`).join('')}</select>
+    <div class="row2"><div><label class="fl">Price</label><input class="field" id="mkP" placeholder="e.g. 1 200 $"></div><div><label class="fl">Contact phone</label><input class="field" id="mkT" type="tel" placeholder="450-555-…"></div></div>
+    <label class="fl">Note (weight, papers, delivery…)</label><input class="field" id="mkN" placeholder="e.g. ~480 kg, ATQ ok">
+    <button class="btn clay" data-a="marketPublish">Publish to the network</button>
+    <button class="btn ghost" data-a="closeSheet">Cancel</button>`;
+  openSheet();
+}
+async function marketPublish(){
+  const a=animalById((document.getElementById('mkA')||{}).value);if(!a){toast('Pick an animal');return;}
+  const price=(document.getElementById('mkP')||{}).value.trim();
+  try{
+    const d=(await bridgeGet(MARKET_ROOM).catch(()=>null))||{};
+    d.listings=(d.listings||[]).slice(-60);
+    const photo=(a.photo&&a.photo.length<15000)?a.photo:'';
+    d.listings.push({id:'mk'+Date.now(),room:sync.room,farm:farmName(),name:a.name,tag:a.tag||'',emoji:a.emoji,cat:a.cat,breed:a.breed||'',sex:a.sex||'',age:a.age||'',price,phone:(document.getElementById('mkT')||{}).value.trim(),note:(document.getElementById('mkN')||{}).value.trim(),photo,status:'active',ts:Date.now()});
+    await bridgeSet(MARKET_ROOM,d);
+    closeSheet();switchView('market');toast('🛒 Listed on the network');
+  }catch(e){toast('Could not reach the market');}
+}
+async function marketSold(id){await marketStatus(id,'sold');toast('✅ Marked sold');}
+async function marketRemove(id){await marketStatus(id,'removed');toast('Removed');}
+async function marketStatus(id,st){
+  try{
+    const d=(await bridgeGet(MARKET_ROOM).catch(()=>null))||{};
+    (d.listings||[]).forEach(l=>{if(l.id===id&&l.room===sync.room)l.status=st;});
+    await bridgeSet(MARKET_ROOM,d);renderMarket();
+  }catch(e){toast('Could not reach the market');}
+}
+async function renderPartnerPortal(){
+  const el=document.getElementById('partnerPortal');if(!el)return;
+  if(whoRole()!=='Partner'||!pHost()){el.innerHTML='';return;}
+  const hn=Local.get('hh:phn')||pHost();
+  el.innerHTML=`<div class="proto active" style="margin-bottom:14px"><div class="proto-h"><span class="pe">🐴</span><b>Partner portal — manure & litter</b><span class="who">→ ${esc(hn)}</span></div><div class="proto-body" id="ppBody"><p class="lead">Connecting…</p></div></div>`;
+  const body=document.getElementById('ppBody');
+  if(!sync.on){body.innerHTML='<p class="lead">Needs sync + sign-in.</p>';return;}
+  try{
+    const d=(await bridgeGet(bridgeId(sync.room,pHost())))||{};
+    const notes=(d.notes||[]).slice(-4).reverse();
+    body.innerHTML=`<div class="pl"><span class="k">🛏️ Reported level</span><span class="v">${esc(d.litter||'—')}</span></div>
+      <div class="row2" style="margin:8px 0"><select class="field" id="ppLv" style="margin:0"><option value="low">Low</option><option value="half">Half</option><option value="full">Full — come collect</option><option value="overflow">Overflowing</option></select><button class="btn clay" data-a="portalLitter" style="margin:0">Report</button></div>
+      ${notes.length?notes.map(n=>`<div class="pl" style="padding:7px 2px"><span class="k">${esc(n.t)}</span><span class="v" style="font-size:10px">${esc(n.by||'')}</span></div>`).join(''):'<p class="lead">No messages yet.</p>'}
+      <div class="row2" style="margin-top:8px"><input class="field" id="ppNote" style="margin:0" placeholder="Message to ${esc(hn)}…"><button class="btn" data-a="portalNote" style="margin:0">Send</button></div>
+      <button class="btn ghost" data-a="portalRefresh" style="margin-top:8px">🔄 Refresh</button>`;
+  }catch(e){body.innerHTML='<p class="lead">Unreachable — check internet / sign-in.</p>';}
+}
+function portalRefresh(){renderPartnerPortal();}
+async function portalLitter(){
+  const lv=(document.getElementById('ppLv')||{}).value||'half';
+  try{const room=bridgeId(sync.room,pHost());const d=(await bridgeGet(room).catch(()=>null))||{};
+    d.litter=lv;d.litterBy=farmName();d.litterAt=Date.now();
+    await bridgeSet(room,d);toast('🛏️ Reported');renderPartnerPortal();
+  }catch(e){toast('Could not reach the bridge');}
+}
+async function portalNote(){
+  const t=(document.getElementById('ppNote')||{}).value.trim();if(!t){toast('Write the message');return;}
+  try{const room=bridgeId(sync.room,pHost());const d=(await bridgeGet(room).catch(()=>null))||{};
+    d.notes=(d.notes||[]).slice(-19);d.notes.push({t,by:farmName(),ts:Date.now()});
+    await bridgeSet(room,d);toast('💬 Sent');renderPartnerPortal();
+  }catch(e){toast('Could not reach the bridge');}
+}
+async function plinkLitter(siteId){
+  const s=siteById(siteId);if(!s||!s.linkRoom)return;
+  const lv=(document.getElementById('plLv')||{}).value||'half';
+  try{
+    const room=bridgeId(sync.room,s.linkRoom);
+    const d=(await bridgeGet(room).catch(()=>null))||{};
+    d.litter=lv;d.litterBy=farmName();d.litterAt=Date.now();
+    await bridgeSet(room,d);toast('🛏️ Level shared with partner');loadBridge(siteId);
+  }catch(e){toast('Could not reach the bridge');}
+}
+async function plinkNote(siteId){
+  const s=siteById(siteId);if(!s||!s.linkRoom)return;
+  const t=(document.getElementById('plNote')||{}).value.trim();if(!t){toast('Write the message');return;}
+  try{
+    const room=bridgeId(sync.room,s.linkRoom);
+    const d=(await bridgeGet(room).catch(()=>null))||{};
+    d.notes=(d.notes||[]).slice(-19);d.notes.push({t,by:farmName(),ts:Date.now()});
+    await bridgeSet(room,d);toast('💬 Sent');loadBridge(siteId);
+  }catch(e){toast('Could not reach the bridge');}
 }
 function openSite(id){
   const s=siteById(id);if(!s)return;
@@ -1726,7 +1938,8 @@ function openSite(id){
   }
   const photos=(s.photos||[]).map(p=>`<div class="gthumb" style="background-image:url('${photoSrc(p)}')" data-a="enlargeSitePhoto" data-p="${id}|${p.id}"></div>`).join('');
   const mapsUrl='https://maps.google.com/?q='+encodeURIComponent(s.address||s.name);
-  document.getElementById('sheet').innerHTML=`<div class="grab"></div><h3>🤝 ${esc(s.name)}</h3>
+  document.getElementById('sheet').innerHTML=`<div class="grab"></div><h3>${SITE_EMO[s.type||'biomass']} ${esc(s.name)}</h3>
+    ${s.linkRoom?`<div class="seclabel">🔗 Partner platform — live</div><div id="plinkBox"></div><button class="btn ghost" data-a="invitePartner" data-p="${id}" style="margin:8px 0 2px">🐴 Copy partner portal invite link</button>`:''}
     <div class="row2" style="margin-bottom:13px">
       ${s.address?`<a class="btn" style="text-align:center;text-decoration:none;display:block;padding:13px" href="${mapsUrl}" target="_blank">🧭 Navigate</a>`:''}
       ${s.phone?`<a class="btn clay" style="text-align:center;text-decoration:none;display:block;padding:13px" href="tel:${esc(s.phone)}">📞 ${esc(s.contact||'Call')}</a>`:''}
@@ -1745,13 +1958,15 @@ function openSite(id){
     <button class="btn clay" data-a="planCollect" data-p="${id}" style="margin-top:10px">🌱 Plan a collection here</button>
     <button class="btn ghost" data-a="editSite" data-p="${id}">✏️ Edit site</button>
     <button class="btn ghost" data-a="closeSheet">Close</button>`;
-  openSheet();
+  openSheet();if(s.linkRoom)setTimeout(()=>loadBridge(id),60);
 }
 function editSite(id){
   const s=id?siteById(id):{name:'',address:'',contact:'',phone:'',instructions:'',note:''};
   if(id&&!s)return;
   document.getElementById('sheet').innerHTML=`<div class="grab"></div><h3>${id?'✏️ Edit site':'＋ New partner site'}</h3>
+    <label class="fl">Type</label><select class="field" id="stType"><option value="biomass" ${(!s.type||s.type==='biomass')?'selected':''}>🌾 Biomass / litter partner</option><option value="equestrian" ${s.type==='equestrian'?'selected':''}>🐴 Equestrian (stable / boarding)</option><option value="vetclinic" ${s.type==='vetclinic'?'selected':''}>🩺 Vet clinic</option><option value="supplier" ${s.type==='supplier'?'selected':''}>🚜 Supplier</option><option value="other" ${s.type==='other'?'selected':''}>🤝 Other partner</option></select>
     <label class="fl">Site / farm name</label><input class="field" id="stName" value="${esc(s.name)}" placeholder="e.g. Ferme Tremblay">
+    <label class="fl">🔗 Partner platform code (their GNR Suite farm code — links the two platforms)</label><input class="field" id="stLink" value="${esc(s.linkRoom||'')}" placeholder="e.g. ecurie-tremblay (leave empty if none)">
     <label class="fl">Address</label><input class="field" id="stAddr" value="${esc(s.address||'')}" placeholder="e.g. 123 rang 4, Shefford QC">
     <div class="row2"><div><label class="fl">Key contact</label><input class="field" id="stContact" value="${esc(s.contact||'')}" placeholder="e.g. Marc"></div><div><label class="fl">Phone</label><input class="field" id="stPhone" type="tel" value="${esc(s.phone||'')}" placeholder="450-555-…"></div></div>
     <label class="fl">Instructions (gate code, truck access, where to load…)</label><textarea class="field" id="stInstr">${esc(s.instructions||'')}</textarea>
@@ -1763,7 +1978,7 @@ function editSite(id){
 }
 async function saveSite(id){
   const name=document.getElementById('stName').value.trim();if(!name){toast('Name the site');return;}
-  const obj={name,address:document.getElementById('stAddr').value.trim(),contact:document.getElementById('stContact').value.trim(),phone:document.getElementById('stPhone').value.trim(),instructions:document.getElementById('stInstr').value.trim(),note:document.getElementById('stNote').value.trim(),_u:Date.now(),_d:false};
+  const obj={name,type:(document.getElementById('stType')||{value:'biomass'}).value,linkRoom:(document.getElementById('stLink')||{value:''}).value.trim().toLowerCase(),address:document.getElementById('stAddr').value.trim(),contact:document.getElementById('stContact').value.trim(),phone:document.getElementById('stPhone').value.trim(),instructions:document.getElementById('stInstr').value.trim(),note:document.getElementById('stNote').value.trim(),_u:Date.now(),_d:false};
   if(id){const s=siteById(id);Object.assign(s,obj);}else{obj.id='st'+Date.now();obj.photos=[];sites.push(obj);}
   await persistData();closeSheet();renderCal();toast('✓ Saved');if(id)openSite(id);
 }
@@ -1985,8 +2200,24 @@ function quickWho(n){const el=document.getElementById('whoName');if(el)el.value=
 function saveWho(){const n=document.getElementById('whoName').value.trim();Local.set('hh:who',n);Local.set('hh:role',document.getElementById('whoRoleSel').value);updateBrand();closeSheet();renderTasks();renderFeed();toast('✓ Saved');}
 function signature(){const n=whoAmI(),r=whoRole();return n?(r?n+' · '+r:n):'Someone';}
 function isObserver(){return whoRole()==='Observer';}
-function updateBrand(){const el=document.getElementById('brandVer');if(el)el.textContent='GNR Shefford · Team · v'+APP_VERSION+(isObserver()?' · 👁 Observer':'');}
-const OBS_BLOCK={openCompose:1,saveEntry:1,setType:1,toggleMic:1,dictate:1,openNewAnimal:1,saveNewAnimal:1,editAnimal:1,saveEdit:1,delEvent:1,pickPhoto:1,setCover:1,delPhoto:1,openQuickCapture:1,qcCapture:1,qcSave:1,quickShot:1,ibAssign:1,ibDrop:1,toggleTask:1,resetTasks:1,openAddTask:1,editTask:1,saveTask:1,delTask:1,editGoals:1,saveGoals:1,openAddCircle:1,editCircle:1,saveCircle:1,delCircle:1,editAlert:1,saveAlert:1,resolveAlert:1,editVet:1,saveVet:1,delVet:1,openAddReminder:1,editReminder:1,saveReminder:1,doneReminder:1,delReminder:1,openAddBreeding:1,saveBreeding:1,markCalved:1,delBreeding:1,openAddInv:1,editInv:1,saveInv:1,delInv:1,invAdj:1,openAddOrder:1,addOrderLine:1,removeOrderLine:1,saveOrder:1,orderStatus:1,delOrder:1,openAddCalEvent:1,editCalEvent:1,saveCalEvent:1,delCalEvent:1,openAddDefect:1,editDefect:1,saveDefect:1,fixDefect:1,delDefect:1,editSite:1,saveSite:1,delSite:1,planCollect:1,sitePickPhoto:1,delSitePhoto:1,mergeAnimals:1,ibCreateAnimal:1,planCollectOn:1,pickDoc:1,docChoose:1,delDoc:1,godShot:1,godAssign:1,godNew:1,godSave:1,estLog:1,mapMode:1,mapFinishPad:1,savePin:1,delPin:1,savePad:1,delPad:1,mapSetBg:1,mapCal:1,mapCalSave:1,editProject:1,saveProject:1,delProject:1,projToggle:1,editPTask:1,savePTask:1,delPTask:1,ptStatus:1,logLabour:1,saveLabour:1};
+function isVet(){return whoRole()==='Vet';}
+function renderVetPortal(){
+  const el=document.getElementById('vetPortal');if(!el)return;
+  if(!isVet()){el.innerHTML='';return;}
+  const risk=animals.filter(a=>!a._d&&(a.status==='high'||a.status==='med'));
+  const wd=reminders.filter(r=>!r._d&&!r.done&&r.kind==='withdrawal'&&r.ts>=Date.now());
+  const cut=Date.now()-14*DAY;
+  const tx=events.filter(e=>e.type==='treatment'&&e.ts>=cut).length;
+  el.innerHTML=`<div class="proto active" style="margin-bottom:14px"><div class="proto-h"><span class="pe">🩺</span><b>Vet portal — ${esc(farmName())}</b><span class="who">${esc(whoAmI()||'Vet')}</span></div><div class="proto-body">
+    <div class="pl"><span class="k">🔴 Patients needing attention</span><span class="v">${risk.length}</span></div>
+    ${risk.slice(0,5).map(a=>`<div class="pl" style="cursor:pointer;padding:7px 2px" data-a="openProfile" data-p="${a.id}"><span class="k">${a.emoji||'🐄'} ${esc(a.name)}${a.tag?' #'+esc(a.tag):''}</span><span class="v"><span class="sev ${a.status}">${a.status}</span></span></div>`).join('')}
+    <div class="pl"><span class="k">💊 Active withdrawals</span><span class="v">${wd.length}</span></div>
+    <div class="pl"><span class="k">💉 Treatments — last 14 days</span><span class="v">${tx}</span></div>
+    <button class="btn clay" data-a="openCompose" data-p="treatment|_herd" style="margin-top:9px">＋ Log a visit / treatment</button>
+  </div></div>`;
+}
+function updateBrand(){const el=document.getElementById('brandVer');if(el)el.textContent=farmName()+' · Team · v'+APP_VERSION+(isObserver()?' · 👁 Observer':(isVet()?' · 🩺 Vet':''));}
+const OBS_BLOCK={openCompose:1,saveEntry:1,setType:1,toggleMic:1,dictate:1,openNewAnimal:1,saveNewAnimal:1,editAnimal:1,saveEdit:1,delEvent:1,pickPhoto:1,setCover:1,delPhoto:1,openQuickCapture:1,qcCapture:1,qcSave:1,quickShot:1,ibAssign:1,ibDrop:1,toggleTask:1,resetTasks:1,openAddTask:1,editTask:1,saveTask:1,delTask:1,editGoals:1,saveGoals:1,openAddCircle:1,editCircle:1,saveCircle:1,delCircle:1,editAlert:1,saveAlert:1,resolveAlert:1,editVet:1,saveVet:1,delVet:1,openAddReminder:1,editReminder:1,saveReminder:1,doneReminder:1,delReminder:1,openAddBreeding:1,saveBreeding:1,markCalved:1,delBreeding:1,openAddInv:1,editInv:1,saveInv:1,delInv:1,invAdj:1,openAddOrder:1,addOrderLine:1,removeOrderLine:1,saveOrder:1,orderStatus:1,delOrder:1,openAddCalEvent:1,editCalEvent:1,saveCalEvent:1,delCalEvent:1,openAddDefect:1,editDefect:1,saveDefect:1,fixDefect:1,delDefect:1,editSite:1,saveSite:1,delSite:1,planCollect:1,sitePickPhoto:1,delSitePhoto:1,mergeAnimals:1,ibCreateAnimal:1,planCollectOn:1,pickDoc:1,docChoose:1,delDoc:1,godShot:1,godAssign:1,godNew:1,godSave:1,estLog:1,mapMode:1,mapFinishPad:1,savePin:1,delPin:1,savePad:1,delPad:1,mapSetBg:1,mapCal:1,mapCalSave:1,editProject:1,saveProject:1,delProject:1,projToggle:1,editPTask:1,savePTask:1,delPTask:1,ptStatus:1,logLabour:1,saveLabour:1,saveFarmProfile:1,plinkLitter:1,plinkNote:1,openSellSheet:1,marketPublish:1,marketSold:1,marketRemove:1};
 /* ----- circles ----- */
 function openAddCircle(){editCircle('');}
 function editCircle(id){
@@ -2333,6 +2564,7 @@ async function saveEntry(){
   if(composeType==='tag'&&value){const a=animalById(animalId);if(a){a.tag=value.replace(/[^0-9A-Za-z]/g,'');a._u=Date.now();}}
   if(composeType==='weight'&&value&&!/kg|lb/i.test(value))value+=' kg';
   events.push({id:'e'+Date.now()+Math.floor(Math.random()*999),animalId,type:composeType,text:text||(TYPES[composeType].l+' logged'),value,ts:Date.now(),by:(by||signature())});
+  try{ledgerLog('animal',animalId,composeType,{text,value},by||signature());}catch(e){}
   if(composeType==='treatment'){const wdEl=document.getElementById('cWd');const wd=wdEl?parseFloat(wdEl.value):0;if(wd>0){const an=animalById(animalId);reminders.push({id:'rm'+Date.now()+Math.floor(Math.random()*99),title:'💊 Withdrawal ends — '+(an?an.name:'herd'),kind:'withdrawal',ts:startOfToday()+wd*DAY,animalId:animalId==='_herd'?'':animalId,note:value||text,done:false,_u:Date.now(),_d:false});toast('💊 Withdrawal reminder set (+'+wd+'d)');}}
   await persistData();closeSheet();renderFeed();renderHerd();switchView('feed');toast('✓ Posted');
 }
@@ -2400,7 +2632,84 @@ function mediaInit(){
   try{
     mdb=new Dexie('gnr_media');
     mdb.version(1).stores({photos:'localId,refId,syncStatus,createdAt',photoBlobs:'localId',syncQueue:'++jobId,status'});
+    /* V3 — Bio-data ledger (append-only, event-sourced). Existing data untouched by upgrade. */
+    mdb.version(3).stores({
+      photos:'localId,refId,syncStatus,createdAt',photoBlobs:'localId',syncQueue:'++jobId,status',
+      assets:'id,kind,refId,tag',
+      observations:'id,assetId,type,ts,[assetId+type]',
+      bioEvents:'id,assetId,type,ts,supersedes',
+      eventLog:'id,ts,actor,action',
+      syncOutbox:'id,ts,kind'
+    });
+    /* Immutable tables: physical update/delete is forbidden at engine level */
+    ['observations','bioEvents','eventLog'].forEach(t=>{
+      try{
+        mdb[t].hook('updating',function(){throw new Error('LEDGER_IMMUTABLE: '+t+' is append-only — write a correction record instead');});
+        mdb[t].hook('deleting',function(){throw new Error('LEDGER_IMMUTABLE: '+t+' is append-only');});
+      }catch(e){}
+    });
   }catch(e){mdb=null;}
+}
+/* ===== ULID — 48-bit time + 80-bit random, Crockford base32, monotonic ===== */
+const ULID_B32='0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+let _ulT=0,_ulR=null;
+function ulid(){
+  const t=Date.now();
+  let rnd=new Uint8Array(10);
+  try{(window.crypto||{}).getRandomValues?crypto.getRandomValues(rnd):rnd.forEach((_,i)=>rnd[i]=Math.floor(Math.random()*256));}
+  catch(e){for(let i=0;i<10;i++)rnd[i]=Math.floor(Math.random()*256);}
+  if(t===_ulT&&_ulR){rnd=_ulR.slice();for(let i=9;i>=0;i--){if(rnd[i]<255){rnd[i]++;break;}rnd[i]=0;}}
+  _ulT=t;_ulR=rnd.slice();
+  let s='',tt=t;
+  for(let i=0;i<10;i++){s=ULID_B32[tt%32]+s;tt=Math.floor(tt/32);}
+  let bits=0,val=0,r='';
+  for(let i=0;i<10;i++){val=(val<<8)|rnd[i];bits+=8;while(bits>=5){r+=ULID_B32[(val>>>(bits-5))&31];bits-=5;}}
+  return s+r;
+}
+/* ===== BIO-DATA LEDGER — append-only writes, never put() on immutable tables ===== */
+async function ledgerLog(kind,refId,eventType,obsData,actor,opts){
+  mediaInit();if(!mdb||!mdb.observations)return null;
+  try{
+    const now=Date.now(),who=actor||signature();
+    const assetId='as_'+kind+'_'+String(refId||'_herd');
+    await mdb.assets.put({id:assetId,kind,refId:String(refId||'_herd'),updatedAt:now}); /* registry (mutable by design) */
+    const list=Array.isArray(obsData)?obsData:[obsData||{}];
+    const obsIds=[];
+    for(const od of list){
+      const oid=ulid();obsIds.push(oid);
+      await mdb.observations.add({id:oid,assetId,type:eventType,ts:now,by:who,data:od,source:(opts&&opts.source)||'app',schema:1});
+    }
+    const evId=ulid();
+    await mdb.bioEvents.add({id:evId,assetId,type:eventType,ts:now,by:who,observationIds:obsIds,supersedes:(opts&&opts.supersedes)||null,schema:1});
+    await mdb.eventLog.add({id:ulid(),ts:now,actor:who,action:'BIO_EVENT',entity:evId,assetId,type:eventType});
+    await mdb.syncOutbox.add({id:evId,ts:now,kind:'bioEvent'});
+    return evId;
+  }catch(e){return null;}
+}
+function ledgerCorrect(priorEvId,kind,refId,eventType,obsData,actor){
+  return ledgerLog(kind,refId,eventType,obsData,actor,{supersedes:priorEvId});
+}
+async function ledgerStats(){
+  try{mediaInit();if(!mdb||!mdb.observations)return null;
+    return {obs:await mdb.observations.count(),events:await mdb.bioEvents.count(),log:await mdb.eventLog.count()};
+  }catch(e){return null;}
+}
+async function exportLedger(){
+  try{
+    mediaInit();if(!mdb||!mdb.observations){toast('Ledger not available on this device');return;}
+    const out={exportedAt:new Date().toISOString(),farm:sync.room,
+      assets:await mdb.assets.toArray(),observations:await mdb.observations.toArray(),
+      bioEvents:await mdb.bioEvents.toArray(),eventLog:await mdb.eventLog.toArray()};
+    const b=new Blob([JSON.stringify(out,null,1)],{type:'application/json'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(b);
+    a.download='gnr_biodata_ledger_'+new Date().toISOString().slice(0,10)+'.json';a.click();
+    toast('📒 Ledger exported');
+  }catch(e){toast('Export failed');}
+}
+async function renderLedgerLine(){
+  const el=document.getElementById('ledgerLine');if(!el)return;
+  const s=await ledgerStats();
+  el.innerHTML=s?`📒 Bio-data ledger: <b>${s.obs}</b> immutable observations · ${s.events} events on this device`:'📒 Bio-data ledger: not supported by this browser';
 }
 function dataURLtoBlob(d){const pr=d.split(',');const mime=(pr[0].match(/data:(.*?);/)||[])[1]||'image/jpeg';const bin=atob(pr[1]);const arr=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);return new Blob([arr],{type:mime});}
 function makeThumb(dataURL,cb){
@@ -2578,6 +2887,7 @@ function estCalc(){const v=estVals();const o=document.getElementById('estOut');i
 async function estLog(id){
   const v=estVals();if(!v){toast('Enter girth & length first');return;}
   events.push({id:'e'+Date.now(),animalId:id,type:'weight',text:'Estimated by tape (girth × length formula)',value:v+' kg (est.)',ts:Date.now(),by:signature()});
+  try{ledgerLog('animal',id,'weight',{value:v,unit:'kg',method:'tape'},signature());}catch(e){}
   await persistData();closeSheet();openProfile(id);renderFeed();toast('📏 ~'+v+' kg logged');
 }
 
@@ -2728,14 +3038,14 @@ function disconnectSync(){sync.on=false;sync.url='';sync.key='';saveSyncCfg();if
 /* ===== SHEET + NAV ===== */
 function openSheet(){document.getElementById('overlay').classList.add('show');document.getElementById('sheet').classList.add('show');}
 function closeSheet(){if(listening&&recog)recog.stop();document.getElementById('overlay').classList.remove('show');document.getElementById('sheet').classList.remove('show');}
-function switchView(v){document.querySelectorAll('.view').forEach(s=>s.classList.remove('active'));document.getElementById('v-'+v).classList.add('active');document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('on',b.dataset.v===v));if(v==='feed')renderFeed();if(v==='tasks')renderTasks();if(v==='vet')renderVet();if(v==='herd')renderHerd();if(v==='info'){renderSyncStatusBox();renderDevNotes();renderAuthLine();}if(v==='logi')renderLogi();if(v==='cal')renderCal();if(v==='god')renderGod();if(v==='map')renderMap();const mod=v==='vet'?'vet':(v==='logi'?'logi':(v==='cal'?'cal':(v==='map'?'map':'herd')));['herd','vet','logi','cal','map'].forEach(m=>{const c=document.getElementById('mod-'+m);if(c)c.classList.toggle('on',m===mod);});window.scrollTo(0,0);}
+function switchView(v){document.querySelectorAll('.view').forEach(s=>s.classList.remove('active'));document.getElementById('v-'+v).classList.add('active');document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('on',b.dataset.v===v));if(v==='feed')renderFeed();if(v==='tasks')renderTasks();if(v==='vet')renderVet();if(v==='herd')renderHerd();if(v==='info'){renderSyncStatusBox();renderDevNotes();renderAuthLine();renderLedgerLine();}if(v==='vet')renderVetPortal();if(v==='feed')renderPartnerPortal();if(v==='market')renderMarket();if(v==='logi')renderLogi();if(v==='cal')renderCal();if(v==='god')renderGod();if(v==='map')renderMap();const mod=v==='vet'?'vet':(v==='logi'?'logi':(v==='cal'?'cal':(v==='map'?'map':'herd')));['herd','vet','logi','cal','map'].forEach(m=>{const c=document.getElementById('mod-'+m);if(c)c.classList.toggle('on',m===mod);});window.scrollTo(0,0);}
 document.getElementById('search').addEventListener('input',renderHerd);
 function exportData(){const blob=new Blob([JSON.stringify({animals,events,deleted,exported:new Date().toISOString()},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='herdhub-backup.json';a.click();URL.revokeObjectURL(url);toast('⬇ Backup downloaded');}
 
 /* ===== CLICK DELEGATION (works inside sandboxed iframes / strict CSP) ===== */
 function toggleSop(i){var e=document.getElementById('sop'+i);if(e)e.classList.toggle('open');}
 (function(){
-  var H={openCompose:openCompose,switchView:switchView,openProfile:openProfile,openNewAnimal:openNewAnimal,saveNewAnimal:saveNewAnimal,editAnimal:editAnimal,saveEdit:saveEdit,saveEntry:saveEntry,setType:setType,delEvent:delEvent,pickPhoto:pickPhoto,toggleTask:toggleTask,resetTasks:resetTasks,setFilter:setFilter,editAlert:editAlert,saveAlert:saveAlert,resolveAlert:resolveAlert,editVet:editVet,saveVet:saveVet,delVet:delVet,openSync:openSync,copySQL:copySQL,connectSync:connectSync,disconnectSync:disconnectSync,closeSheet:closeSheet,exportData:exportData,toggleSop:toggleSop,openAddTask:openAddTask,editTask:editTask,saveTask:saveTask,delTask:delTask,setCircle:setCircle,setWho:setWho,quickWho:quickWho,saveWho:saveWho,openAddCircle:openAddCircle,editCircle:editCircle,saveCircle:saveCircle,delCircle:delCircle,openAddReminder:openAddReminder,editReminder:editReminder,saveReminder:saveReminder,doneReminder:doneReminder,delReminder:delReminder,openAddBreeding:openAddBreeding,saveBreeding:saveBreeding,markCalved:markCalved,delBreeding:delBreeding,enableNotif:enableNotif,addToCalendar:addToCalendar,enlargePhoto:enlargePhoto,setCover:setCover,delPhoto:delPhoto,openQuickCapture:openQuickCapture,qcCapture:qcCapture,qcSave:qcSave,dictate:dictate,openInbox:openInbox,quickShot:quickShot,ibAssign:ibAssign,ibDrop:ibDrop,openDuplicates:openDuplicates,mergeAnimals:mergeAnimals,toggleMic:toggleMic,goModule:goModule,openAddInv:openAddInv,editInv:editInv,saveInv:saveInv,delInv:delInv,invAdj:invAdj,openAddOrder:openAddOrder,addOrderLine:addOrderLine,removeOrderLine:removeOrderLine,saveOrder:saveOrder,orderStatus:orderStatus,delOrder:delOrder,calSelectDay:calSelectDay,openAddCalEvent:openAddCalEvent,editCalEvent:editCalEvent,saveCalEvent:saveCalEvent,delCalEvent:delCalEvent,editGoals:editGoals,saveGoals:saveGoals,openAddDefect:openAddDefect,editDefect:editDefect,saveDefect:saveDefect,fixDefect:fixDefect,delDefect:delDefect,exportPurchases:exportPurchases,openSite:openSite,editSite:editSite,saveSite:saveSite,delSite:delSite,planCollect:planCollect,sitePickPhoto:sitePickPhoto,enlargeSitePhoto:enlargeSitePhoto,delSitePhoto:delSitePhoto,refreshWeather:refreshWeather,cropConfirm:cropConfirm,cropSkip:cropSkip,ibCreateAnimal:ibCreateAnimal,editDevNote:editDevNote,saveDevNote:saveDevNote,doneDevNote:doneDevNote,delDevNote:delDevNote,planCollectOn:planCollectOn,pickDoc:pickDoc,docChoose:docChoose,viewDoc:viewDoc,delDoc:delDoc,godShot:godShot,godAssign:godAssign,godNew:godNew,godSave:godSave,estWeight:estWeight,estCalc:estCalc,estLog:estLog,mapMode:mapMode,mapSat:mapSat,mapFinishPad:mapFinishPad,openPinSheet:openPinSheet,savePin:savePin,delPin:delPin,editPad:editPad,savePad:savePad,delPad:delPad,openProject:openProject,editProject:editProject,saveProject:saveProject,delProject:delProject,projToggle:projToggle,editPTask:editPTask,savePTask:savePTask,delPTask:delPTask,ptStatus:ptStatus,logLabour:logLabour,saveLabour:saveLabour,doLogin:doLogin,logout:logout,showGate:showGate,mapViewSet:mapViewSet,mapSetBg:mapSetBg,mapCal:mapCal,mapCalSave:mapCalSave,inviteDevice:inviteDevice,gateToggle:gateToggle,doSignup:doSignup};
+  var H={openCompose:openCompose,switchView:switchView,openProfile:openProfile,openNewAnimal:openNewAnimal,saveNewAnimal:saveNewAnimal,editAnimal:editAnimal,saveEdit:saveEdit,saveEntry:saveEntry,setType:setType,delEvent:delEvent,pickPhoto:pickPhoto,toggleTask:toggleTask,resetTasks:resetTasks,setFilter:setFilter,editAlert:editAlert,saveAlert:saveAlert,resolveAlert:resolveAlert,editVet:editVet,saveVet:saveVet,delVet:delVet,openSync:openSync,copySQL:copySQL,connectSync:connectSync,disconnectSync:disconnectSync,closeSheet:closeSheet,exportData:exportData,toggleSop:toggleSop,openAddTask:openAddTask,editTask:editTask,saveTask:saveTask,delTask:delTask,setCircle:setCircle,setWho:setWho,quickWho:quickWho,saveWho:saveWho,openAddCircle:openAddCircle,editCircle:editCircle,saveCircle:saveCircle,delCircle:delCircle,openAddReminder:openAddReminder,editReminder:editReminder,saveReminder:saveReminder,doneReminder:doneReminder,delReminder:delReminder,openAddBreeding:openAddBreeding,saveBreeding:saveBreeding,markCalved:markCalved,delBreeding:delBreeding,enableNotif:enableNotif,addToCalendar:addToCalendar,enlargePhoto:enlargePhoto,setCover:setCover,delPhoto:delPhoto,openQuickCapture:openQuickCapture,qcCapture:qcCapture,qcSave:qcSave,dictate:dictate,openInbox:openInbox,quickShot:quickShot,ibAssign:ibAssign,ibDrop:ibDrop,openDuplicates:openDuplicates,mergeAnimals:mergeAnimals,toggleMic:toggleMic,goModule:goModule,openAddInv:openAddInv,editInv:editInv,saveInv:saveInv,delInv:delInv,invAdj:invAdj,openAddOrder:openAddOrder,addOrderLine:addOrderLine,removeOrderLine:removeOrderLine,saveOrder:saveOrder,orderStatus:orderStatus,delOrder:delOrder,calSelectDay:calSelectDay,openAddCalEvent:openAddCalEvent,editCalEvent:editCalEvent,saveCalEvent:saveCalEvent,delCalEvent:delCalEvent,editGoals:editGoals,saveGoals:saveGoals,openAddDefect:openAddDefect,editDefect:editDefect,saveDefect:saveDefect,fixDefect:fixDefect,delDefect:delDefect,exportPurchases:exportPurchases,openSite:openSite,editSite:editSite,saveSite:saveSite,delSite:delSite,planCollect:planCollect,sitePickPhoto:sitePickPhoto,enlargeSitePhoto:enlargeSitePhoto,delSitePhoto:delSitePhoto,refreshWeather:refreshWeather,cropConfirm:cropConfirm,cropSkip:cropSkip,ibCreateAnimal:ibCreateAnimal,editDevNote:editDevNote,saveDevNote:saveDevNote,doneDevNote:doneDevNote,delDevNote:delDevNote,planCollectOn:planCollectOn,pickDoc:pickDoc,docChoose:docChoose,viewDoc:viewDoc,delDoc:delDoc,godShot:godShot,godAssign:godAssign,godNew:godNew,godSave:godSave,estWeight:estWeight,estCalc:estCalc,estLog:estLog,mapMode:mapMode,mapSat:mapSat,mapFinishPad:mapFinishPad,openPinSheet:openPinSheet,savePin:savePin,delPin:delPin,editPad:editPad,savePad:savePad,delPad:delPad,openProject:openProject,editProject:editProject,saveProject:saveProject,delProject:delProject,projToggle:projToggle,editPTask:editPTask,savePTask:savePTask,delPTask:delPTask,ptStatus:ptStatus,logLabour:logLabour,saveLabour:saveLabour,doLogin:doLogin,logout:logout,showGate:showGate,mapViewSet:mapViewSet,mapSetBg:mapSetBg,mapCal:mapCal,mapCalSave:mapCalSave,inviteDevice:inviteDevice,gateToggle:gateToggle,doSignup:doSignup,exportLedger:exportLedger,openFarmProfile:openFarmProfile,fpLocate:fpLocate,saveFarmProfile:saveFarmProfile,plinkRefresh:plinkRefresh,plinkLitter:plinkLitter,plinkNote:plinkNote,inviteVet:inviteVet,invitePartner:invitePartner,portalLitter:portalLitter,portalNote:portalNote,portalRefresh:portalRefresh,openSellSheet:openSellSheet,marketPublish:marketPublish,marketSold:marketSold,marketRemove:marketRemove,marketRefresh:marketRefresh};
   document.addEventListener('click',function(e){
     var t=e.target; var el=t&&t.closest?t.closest('[data-a]'):null;
     if(!el)return;
@@ -2775,6 +3085,8 @@ function toggleSop(i){var e=document.getElementById('sop'+i);if(e)e.classList.to
   updateBrand();
   startPoll();
   renderAuthLine();
+  if(isVet()){goModule('vet');}
+  renderPartnerPortal();
   mediaKick();setInterval(mediaKick,20000);
   checkDue(); setInterval(checkDue,60000);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden){checkDue();if(sync.on){API.pull().then(remote=>{if(remote){const before=JSON.stringify(curState());applyState(mergeStates(curState(),remote));if(JSON.stringify(curState())!==before){Store.set('state:v2',JSON.stringify(curState()));renderFeed();renderHerd();}setStatus('synced');}}).catch(()=>setStatus('error'));}}});
