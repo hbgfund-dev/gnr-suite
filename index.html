@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Herd Hub — GNR Shefford (Synced)</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#14352A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="GNR Suite">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/dexie@3.2.7/dist/dexie.min.js"></script>
@@ -555,6 +563,7 @@
     <div class="vsub">Site, sync & reference</div>
     <div class="seclabel">Cloud Sync</div>
     <div id="syncStatusBox"></div>
+    <button class="btn clay" id="installBtn" data-a="installApp" style="margin-bottom:9px;display:none">📲 Install GNR Suite app</button>
     <button class="btn" data-a="openSync" style="margin-bottom:9px;">🔗 Set up / manage sync</button>
     <button class="btn" data-a="inviteDevice" style="margin-bottom:9px;">📲 Invite a device (one-tap setup)</button>
     <button class="btn" data-a="openFarmProfile" style="margin-bottom:9px;">🏷️ Farm profile (name, location, weather)</button>
@@ -664,9 +673,10 @@ const SEED_ALERTS=[{id:'al1',animal:'Whole herd',sev:'high',prob:'Grain silo / m
 const TYPES={note:{e:'📝',l:'Note'},health:{e:'🏥',l:'Health'},feed:{e:'🍼',l:'Feeding'},treatment:{e:'💊',l:'Treatment'},weight:{e:'⚖️',l:'Weight'},tag:{e:'🏷️',l:'Tag'},milestone:{e:'✨',l:'Milestone'},arrival:{e:'🐣',l:'Arrival'},removal:{e:'📤',l:'Removed'}};
 
 /* ===== VET / PROTOCOL DATA ===== */
-const APP_VERSION='8.1';
+const APP_VERSION='8.2';
 const APP_STAGE='Stable — ready to deploy';
 const CHANGELOG=[
+  {v:'8.2',d:'Jun 2026',c:'📲 True installable PWA: manifest + app icons (from the GNR logo) + offline-shell service worker. Native "Install" prompt on Android/Windows/Chrome, proper home-screen app on iPhone — opens instantly, works with zero connectivity.'},
   {v:'8.1',d:'Jun 2026',c:'⏫ Ledger replicator: the local bio-data ledger drains to a server-side append-only bio_ledger table (insert-only RLS — immutable in the cloud too). Idempotent, offline-resilient, auto-triggered.'},
   {v:'8.0',d:'Jun 2026',c:'🛒 Animal market: network-wide listings between partner farms — publish an animal (photo, price, contact), browse, call the seller, mark sold. White-label farm names on every listing.'},
   {v:'7.9',d:'Jun 2026',c:'🐴 Equestrian partner portal: dedicated invite from the site sheet — the partner\'s device opens on a simple manure/litter portal (report level, message the farm) over the shared bridge.'},
@@ -817,6 +827,21 @@ async function doLogin(){
     await persistData();startPoll();mediaKick();
   }catch(e){lgError('Network error — are you online?');}
   if(btn)btn.textContent='🔐 Sign in';
+}
+let deferredInstall=null;
+function registerSW(){
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  }
+}
+async function installApp(){
+  if(deferredInstall){deferredInstall.prompt();const r=await deferredInstall.userChoice;deferredInstall=null;const b=document.getElementById('installBtn');if(b&&r.outcome==='accepted')b.style.display='none';return;}
+  const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  document.getElementById('sheet').innerHTML=`<div class="grab"></div><h3>📲 Install GNR Suite</h3>
+    ${ios?`<p class="lead">On iPhone/iPad: tap the <b>Share</b> button (square with an arrow) in Safari's toolbar, then <b>Add to Home Screen</b>. The app icon and offline mode are ready.</p>`
+    :`<p class="lead">Your browser doesn't offer the install prompt right now. Look for <b>Install app</b> in the browser menu (⋮), or <b>Add to Home Screen</b>. The app works offline once installed.</p>`}
+    <button class="btn ghost" data-a="closeSheet">Close</button>`;
+  openSheet();
 }
 let gateMode='login';
 function gateToggle(){
@@ -3071,7 +3096,7 @@ function exportData(){const blob=new Blob([JSON.stringify({animals,events,delete
 /* ===== CLICK DELEGATION (works inside sandboxed iframes / strict CSP) ===== */
 function toggleSop(i){var e=document.getElementById('sop'+i);if(e)e.classList.toggle('open');}
 (function(){
-  var H={openCompose:openCompose,switchView:switchView,openProfile:openProfile,openNewAnimal:openNewAnimal,saveNewAnimal:saveNewAnimal,editAnimal:editAnimal,saveEdit:saveEdit,saveEntry:saveEntry,setType:setType,delEvent:delEvent,pickPhoto:pickPhoto,toggleTask:toggleTask,resetTasks:resetTasks,setFilter:setFilter,editAlert:editAlert,saveAlert:saveAlert,resolveAlert:resolveAlert,editVet:editVet,saveVet:saveVet,delVet:delVet,openSync:openSync,copySQL:copySQL,connectSync:connectSync,disconnectSync:disconnectSync,closeSheet:closeSheet,exportData:exportData,toggleSop:toggleSop,openAddTask:openAddTask,editTask:editTask,saveTask:saveTask,delTask:delTask,setCircle:setCircle,setWho:setWho,quickWho:quickWho,saveWho:saveWho,openAddCircle:openAddCircle,editCircle:editCircle,saveCircle:saveCircle,delCircle:delCircle,openAddReminder:openAddReminder,editReminder:editReminder,saveReminder:saveReminder,doneReminder:doneReminder,delReminder:delReminder,openAddBreeding:openAddBreeding,saveBreeding:saveBreeding,markCalved:markCalved,delBreeding:delBreeding,enableNotif:enableNotif,addToCalendar:addToCalendar,enlargePhoto:enlargePhoto,setCover:setCover,delPhoto:delPhoto,openQuickCapture:openQuickCapture,qcCapture:qcCapture,qcSave:qcSave,dictate:dictate,openInbox:openInbox,quickShot:quickShot,ibAssign:ibAssign,ibDrop:ibDrop,openDuplicates:openDuplicates,mergeAnimals:mergeAnimals,toggleMic:toggleMic,goModule:goModule,openAddInv:openAddInv,editInv:editInv,saveInv:saveInv,delInv:delInv,invAdj:invAdj,openAddOrder:openAddOrder,addOrderLine:addOrderLine,removeOrderLine:removeOrderLine,saveOrder:saveOrder,orderStatus:orderStatus,delOrder:delOrder,calSelectDay:calSelectDay,openAddCalEvent:openAddCalEvent,editCalEvent:editCalEvent,saveCalEvent:saveCalEvent,delCalEvent:delCalEvent,editGoals:editGoals,saveGoals:saveGoals,openAddDefect:openAddDefect,editDefect:editDefect,saveDefect:saveDefect,fixDefect:fixDefect,delDefect:delDefect,exportPurchases:exportPurchases,openSite:openSite,editSite:editSite,saveSite:saveSite,delSite:delSite,planCollect:planCollect,sitePickPhoto:sitePickPhoto,enlargeSitePhoto:enlargeSitePhoto,delSitePhoto:delSitePhoto,refreshWeather:refreshWeather,cropConfirm:cropConfirm,cropSkip:cropSkip,ibCreateAnimal:ibCreateAnimal,editDevNote:editDevNote,saveDevNote:saveDevNote,doneDevNote:doneDevNote,delDevNote:delDevNote,planCollectOn:planCollectOn,pickDoc:pickDoc,docChoose:docChoose,viewDoc:viewDoc,delDoc:delDoc,godShot:godShot,godAssign:godAssign,godNew:godNew,godSave:godSave,estWeight:estWeight,estCalc:estCalc,estLog:estLog,mapMode:mapMode,mapSat:mapSat,mapFinishPad:mapFinishPad,openPinSheet:openPinSheet,savePin:savePin,delPin:delPin,editPad:editPad,savePad:savePad,delPad:delPad,openProject:openProject,editProject:editProject,saveProject:saveProject,delProject:delProject,projToggle:projToggle,editPTask:editPTask,savePTask:savePTask,delPTask:delPTask,ptStatus:ptStatus,logLabour:logLabour,saveLabour:saveLabour,doLogin:doLogin,logout:logout,showGate:showGate,mapViewSet:mapViewSet,mapSetBg:mapSetBg,mapCal:mapCal,mapCalSave:mapCalSave,inviteDevice:inviteDevice,gateToggle:gateToggle,doSignup:doSignup,exportLedger:exportLedger,openFarmProfile:openFarmProfile,fpLocate:fpLocate,saveFarmProfile:saveFarmProfile,plinkRefresh:plinkRefresh,plinkLitter:plinkLitter,plinkNote:plinkNote,inviteVet:inviteVet,invitePartner:invitePartner,portalLitter:portalLitter,portalNote:portalNote,portalRefresh:portalRefresh,openSellSheet:openSellSheet,marketPublish:marketPublish,marketSold:marketSold,marketRemove:marketRemove,marketRefresh:marketRefresh};
+  var H={openCompose:openCompose,switchView:switchView,openProfile:openProfile,openNewAnimal:openNewAnimal,saveNewAnimal:saveNewAnimal,editAnimal:editAnimal,saveEdit:saveEdit,saveEntry:saveEntry,setType:setType,delEvent:delEvent,pickPhoto:pickPhoto,toggleTask:toggleTask,resetTasks:resetTasks,setFilter:setFilter,editAlert:editAlert,saveAlert:saveAlert,resolveAlert:resolveAlert,editVet:editVet,saveVet:saveVet,delVet:delVet,openSync:openSync,copySQL:copySQL,connectSync:connectSync,disconnectSync:disconnectSync,closeSheet:closeSheet,exportData:exportData,toggleSop:toggleSop,openAddTask:openAddTask,editTask:editTask,saveTask:saveTask,delTask:delTask,setCircle:setCircle,setWho:setWho,quickWho:quickWho,saveWho:saveWho,openAddCircle:openAddCircle,editCircle:editCircle,saveCircle:saveCircle,delCircle:delCircle,openAddReminder:openAddReminder,editReminder:editReminder,saveReminder:saveReminder,doneReminder:doneReminder,delReminder:delReminder,openAddBreeding:openAddBreeding,saveBreeding:saveBreeding,markCalved:markCalved,delBreeding:delBreeding,enableNotif:enableNotif,addToCalendar:addToCalendar,enlargePhoto:enlargePhoto,setCover:setCover,delPhoto:delPhoto,openQuickCapture:openQuickCapture,qcCapture:qcCapture,qcSave:qcSave,dictate:dictate,openInbox:openInbox,quickShot:quickShot,ibAssign:ibAssign,ibDrop:ibDrop,openDuplicates:openDuplicates,mergeAnimals:mergeAnimals,toggleMic:toggleMic,goModule:goModule,openAddInv:openAddInv,editInv:editInv,saveInv:saveInv,delInv:delInv,invAdj:invAdj,openAddOrder:openAddOrder,addOrderLine:addOrderLine,removeOrderLine:removeOrderLine,saveOrder:saveOrder,orderStatus:orderStatus,delOrder:delOrder,calSelectDay:calSelectDay,openAddCalEvent:openAddCalEvent,editCalEvent:editCalEvent,saveCalEvent:saveCalEvent,delCalEvent:delCalEvent,editGoals:editGoals,saveGoals:saveGoals,openAddDefect:openAddDefect,editDefect:editDefect,saveDefect:saveDefect,fixDefect:fixDefect,delDefect:delDefect,exportPurchases:exportPurchases,openSite:openSite,editSite:editSite,saveSite:saveSite,delSite:delSite,planCollect:planCollect,sitePickPhoto:sitePickPhoto,enlargeSitePhoto:enlargeSitePhoto,delSitePhoto:delSitePhoto,refreshWeather:refreshWeather,cropConfirm:cropConfirm,cropSkip:cropSkip,ibCreateAnimal:ibCreateAnimal,editDevNote:editDevNote,saveDevNote:saveDevNote,doneDevNote:doneDevNote,delDevNote:delDevNote,planCollectOn:planCollectOn,pickDoc:pickDoc,docChoose:docChoose,viewDoc:viewDoc,delDoc:delDoc,godShot:godShot,godAssign:godAssign,godNew:godNew,godSave:godSave,estWeight:estWeight,estCalc:estCalc,estLog:estLog,mapMode:mapMode,mapSat:mapSat,mapFinishPad:mapFinishPad,openPinSheet:openPinSheet,savePin:savePin,delPin:delPin,editPad:editPad,savePad:savePad,delPad:delPad,openProject:openProject,editProject:editProject,saveProject:saveProject,delProject:delProject,projToggle:projToggle,editPTask:editPTask,savePTask:savePTask,delPTask:delPTask,ptStatus:ptStatus,logLabour:logLabour,saveLabour:saveLabour,doLogin:doLogin,logout:logout,showGate:showGate,mapViewSet:mapViewSet,mapSetBg:mapSetBg,mapCal:mapCal,mapCalSave:mapCalSave,inviteDevice:inviteDevice,gateToggle:gateToggle,doSignup:doSignup,exportLedger:exportLedger,openFarmProfile:openFarmProfile,fpLocate:fpLocate,saveFarmProfile:saveFarmProfile,plinkRefresh:plinkRefresh,plinkLitter:plinkLitter,plinkNote:plinkNote,inviteVet:inviteVet,invitePartner:invitePartner,portalLitter:portalLitter,portalNote:portalNote,portalRefresh:portalRefresh,openSellSheet:openSellSheet,marketPublish:marketPublish,marketSold:marketSold,marketRemove:marketRemove,marketRefresh:marketRefresh,installApp:installApp};
   document.addEventListener('click',function(e){
     var t=e.target; var el=t&&t.closest?t.closest('[data-a]'):null;
     if(!el)return;
@@ -3112,9 +3137,14 @@ function toggleSop(i){var e=document.getElementById('sop'+i);if(e)e.classList.to
   startPoll();
   renderAuthLine();
   if(isVet()){goModule('vet');}
+  if(/iphone|ipad|ipod/i.test(navigator.userAgent)){const b=document.getElementById('installBtn');if(b)b.style.display='';}
+  if(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches){const b=document.getElementById('installBtn');if(b)b.style.display='none';}
   renderPartnerPortal();
   mediaKick();setInterval(mediaKick,20000);
   ledgerKick();setInterval(ledgerKick,25000);
+  registerSW();
+  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;const b=document.getElementById('installBtn');if(b)b.style.display='';});
+  window.addEventListener('appinstalled',()=>{const b=document.getElementById('installBtn');if(b)b.style.display='none';toast('📲 Installed!');});
   checkDue(); setInterval(checkDue,60000);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden){checkDue();if(sync.on){API.pull().then(remote=>{if(remote){const before=JSON.stringify(curState());applyState(mergeStates(curState(),remote));if(JSON.stringify(curState())!==before){Store.set('state:v2',JSON.stringify(curState()));renderFeed();renderHerd();}setStatus('synced');}}).catch(()=>setStatus('error'));}}});
 })();
