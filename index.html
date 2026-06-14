@@ -234,6 +234,8 @@
   .gthumb{position:relative;padding-top:100%;border-radius:11px;background-size:cover;background-position:center;border:1px solid var(--line);cursor:pointer;}
   .gthumb.gadd{display:flex;align-items:center;justify-content:center;padding-top:0;aspect-ratio:1;background:rgba(64,145,108,.08);border:1.5px dashed var(--green3);color:var(--green2);font-size:26px;}
   .qc-preview{width:100%;border-radius:14px;margin-bottom:12px;display:block;box-shadow:var(--shadow);}
+  video.qc-preview{background:#000;max-height:60vh;}
+  .gthumb.clip::after{content:'▶';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.6);pointer-events:none;}
   .qc-cam{width:100%;padding:30px 12px;border:1.5px dashed var(--clay);border-radius:14px;background:rgba(188,108,76,.06);color:var(--clay-dk);font-weight:700;font-size:15px;text-align:center;cursor:pointer;margin-bottom:12px;}
   .mini-mic{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:10px;background:var(--green);color:#fff;border:none;font-size:17px;cursor:pointer;flex-shrink:0;}
   .mini-mic.live{background:var(--red);animation:pulse 1.1s infinite;}
@@ -377,7 +379,7 @@
 <div id="loginGate" style="display:none;position:fixed;inset:0;z-index:999;background:linear-gradient(rgba(20,52,38,.93),rgba(20,52,38,.96));backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:20px;">
   <div style="background:var(--card,#fff);border-radius:20px;box-shadow:0 18px 50px rgba(0,0,0,.4);padding:26px 22px;width:100%;max-width:360px;">
     <div style="display:flex;align-items:center;gap:11px;margin-bottom:14px"><div class="logo" style="width:46px;height:42px;"></div><div><div style="font-family:'Fraunces',serif;font-size:20px;color:var(--green);font-weight:600">GNR Suite</div><div style="font-size:11px;color:var(--ink2);font-weight:700" id="lgWho">Sign in to your farm</div></div></div>
-    <label class="fl">Email</label><input class="field" id="lgEmail" type="email" autocomplete="username" placeholder="you@farm.com">
+    <label class="fl">Farm code (or email)</label><input class="field" id="lgEmail" type="text" autocomplete="username" autocapitalize="none" placeholder="e.g. GNR">
     <label class="fl">Password</label><input class="field" id="lgPass" type="password" autocomplete="current-password" placeholder="••••••••">
     <div id="lgP2w" style="display:none"><label class="fl">Confirm password</label><input class="field" id="lgPass2" type="password" autocomplete="new-password" placeholder="••••••••"></div>
     <div id="lgErr" style="display:none;background:var(--red-bg);color:var(--red);font-size:12px;font-weight:700;border-radius:10px;padding:9px 12px;margin-bottom:11px"></div>
@@ -408,6 +410,7 @@
   <section class="view" id="v-cal">
     <div class="vh">📅 Calendrier commun</div>
     <div class="vsub">Biomass collections, top-3 of the day & equipment alerts</div>
+    <div id="carbonDash"></div>
     <div class="filters" id="dayStrip"></div>
     <div class="vh" style="font-size:17px" id="calDayTitle"></div>
     <div class="seclabel">🎯 Top 3 of the day</div>
@@ -444,7 +447,8 @@
   <section class="view" id="v-god">
     <div class="vh">🖥️ GOD MODE — bulk classify</div>
     <div class="vsub">Import in bulk, classify fast. Best on the main desktop — synced everywhere.</div>
-    <button class="btn clay" data-a="godShot" style="margin-bottom:14px">📤 Import photos (select multiple)</button>
+    <button class="btn clay" data-a="godShot" data-p="gal">📤 Import photos (select multiple)</button>
+    <button class="btn" data-a="godShot" data-p="cam" style="margin-bottom:14px">📷 Take a photo (camera)</button>
     <div class="seclabel">📥 To classify (<span id="godInbCount">0</span>)</div>
     <div id="godInbox" class="god-grid"></div>
     <div class="seclabel" style="margin-top:18px">🏷️ Incomplete animals — name & tag them</div>
@@ -509,7 +513,8 @@
     <div class="vsub" id="herdSub">Tap an animal to open its profile</div>
     <button class="add-animal-btn" data-a="openNewAnimal">＋ Add a new animal</button>
     <div class="row2" style="margin-bottom:12px"><button class="btn clay" data-a="openQuickCapture">⚡ Quick capture</button>
-    <button class="btn" data-a="switchView" data-p="market">🛒 Animal market</button><button class="btn" data-a="openInbox" id="inboxBtn">📥 Inbox</button></div>
+    <button class="btn" data-a="switchView" data-p="market">🛒 Animal market</button>
+    <button class="btn ghost" data-a="startDossier" style="margin-bottom:12px">📸 Start a new file (photo only)</button><button class="btn" data-a="openInbox" id="inboxBtn">📥 Inbox</button></div>
     <button class="btn ghost" data-a="switchView" data-p="god" style="margin-bottom:12px">🖥️ GOD MODE — bulk classify (desktop)</button>
     <input class="search" id="search" placeholder="🔍  Search by name or tag…">
     <div class="filters" id="filters"></div>
@@ -569,7 +574,11 @@
     <button class="btn" data-a="openFarmProfile" style="margin-bottom:9px;">🏷️ Farm profile (name, location, weather)</button>
     <div id="authLine" style="margin-bottom:9px"></div>
     <div id="ledgerLine" class="lead" style="font-size:11px;margin-bottom:7px"></div>
-    <button class="btn ghost" data-a="exportLedger" style="margin-bottom:16px;">📒 Export bio-data ledger (JSON)</button>
+    <button class="btn ghost" data-a="exportLedger" style="margin-bottom:9px;">📒 Export bio-data ledger (JSON)</button>
+    <div class="row2" style="margin-bottom:9px"><button class="btn ghost" data-a="hwSerial" style="margin:0">🔌 Serial sensor (beta)</button><button class="btn ghost" data-a="hwBle" style="margin:0">📡 BLE sensor (beta)</button></div>
+    <div class="seclabel">👁 Preview the portals (on this device)</div>
+    <div class="row2" style="margin-bottom:6px"><button class="btn" data-a="pvVet" style="margin:0">🩺 Vet portal</button><button class="btn" data-a="pvPartner" style="margin:0">🐴 Partner portal</button></div>
+    <button class="btn" data-a="pvCarbon" style="margin-bottom:16px">🌱 Carbon & gas dashboard</button>
     <div class="seclabel">Site</div>
     <div class="info-card">
       <div class="info-row"><span class="k">Farm</span><span class="v">GNR Shefford</span></div>
@@ -673,9 +682,14 @@ const SEED_ALERTS=[{id:'al1',animal:'Whole herd',sev:'high',prob:'Grain silo / m
 const TYPES={note:{e:'📝',l:'Note'},health:{e:'🏥',l:'Health'},feed:{e:'🍼',l:'Feeding'},treatment:{e:'💊',l:'Treatment'},weight:{e:'⚖️',l:'Weight'},tag:{e:'🏷️',l:'Tag'},milestone:{e:'✨',l:'Milestone'},arrival:{e:'🐣',l:'Arrival'},removal:{e:'📤',l:'Removed'}};
 
 /* ===== VET / PROTOCOL DATA ===== */
-const APP_VERSION='8.2';
+const APP_VERSION='8.7';
 const APP_STAGE='Stable — ready to deploy';
 const CHANGELOG=[
+  {v:'8.7',d:'Jun 2026',c:'💉 Vaccination program is now fully functional (was a placeholder): add each vaccine with who it applies to, last-given date and repeat interval; the app tracks the next due date, colour-codes overdue/soon/OK, one-tap "Given today" advances it and logs it to the ledger, and a matching reminder is kept in sync automatically.'},
+  {v:'8.6',d:'Jun 2026',c:'🛟 P0 reliability pass: any capture that can\'t be filed now always lands in the Inbox (match miss, sheet closed, or an error) — photos are never lost. ⚠ Clear "Not synced since HH:MM" banner with a Retry button when sync has been failing for 5+ min. 🎬 Clip guardrails: 25 MB cap + gentle ~60 s reminder so the upload queue stays healthy on farm internet. 🔑 Sign in with a short farm code (e.g. GNR) instead of an email.'},
+  {v:'8.5',d:'Jun 2026',c:'⛽ Gas indicator: biogas potential (m³ CH4) + energy equivalent (kWh) on the carbon dashboard. 👁 Portal previews — see the vet portal, partner portal and carbon/gas dashboard from your own device, with sample data. 🗺️ Offline map tiles: the service worker now caches OSM/satellite tiles you have viewed.'},
+  {v:'8.4',d:'Jun 2026',c:'🌱 Live Carbon Engine (Symbi-OS graft): kg-based waste loads on partner bridges & portals → avoided-CO2e estimate (AR5, GWP 28), written to the immutable ledger; 🌍 Carbon dashboard in the Agenda. 🔌 HardwareGateway (Web Serial / BLE, beta) routing sensor reads into the ledger.'},
+  {v:'8.3',d:'Jun 2026',c:'📷 Explicit Camera vs Gallery buttons everywhere a photo is captured (fixes camera not opening on some devices). 🎬 New: Reference clips per animal — short videos for gait/lameness or breathing-sound checks, stored in the local vault. 📸 Start a new file from a photo alone — one tap, sort name/tag later.'},
   {v:'8.2',d:'Jun 2026',c:'📲 True installable PWA: manifest + app icons (from the GNR logo) + offline-shell service worker. Native "Install" prompt on Android/Windows/Chrome, proper home-screen app on iPhone — opens instantly, works with zero connectivity.'},
   {v:'8.1',d:'Jun 2026',c:'⏫ Ledger replicator: the local bio-data ledger drains to a server-side append-only bio_ledger table (insert-only RLS — immutable in the cloud too). Idempotent, offline-resilient, auto-triggered.'},
   {v:'8.0',d:'Jun 2026',c:'🛒 Animal market: network-wide listings between partner farms — publish an animal (photo, price, contact), browse, call the seller, mark sold. White-label farm names on every listing.'},
@@ -730,21 +744,21 @@ const VAX={status:'Not yet documented',note:'No herd vaccination records on file
 
 
 /* ===== STATE ===== */
-let animals=[],events=[],deleted=[],alerts=[],vets=[],tasks=[],circles=[],reminders=[],breedings=[],taskHistory=[],inbox=[],inventory=[],orders=[],calEvents=[],dayPlans=[],defects=[],sites=[],devNotes=[],farmDocs=[],mapPins=[],paddocks=[],projects=[],pTasks=[],labour=[],mapCfg=null,farmProfile=null,taskState={};
+let animals=[],events=[],deleted=[],alerts=[],vets=[],tasks=[],circles=[],reminders=[],breedings=[],taskHistory=[],inbox=[],inventory=[],orders=[],calEvents=[],dayPlans=[],defects=[],sites=[],devNotes=[],farmDocs=[],mapPins=[],paddocks=[],projects=[],pTasks=[],labour=[],vaxRecords=[],mapCfg=null,farmProfile=null,taskState={};
 const todayKey=()=>{const d=new Date();return `tasks:${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;};
-function curState(){return {animals,events,deleted,alerts,vets,tasks,circles,reminders,breedings,taskHistory,inbox,inventory,orders,calEvents,dayPlans,defects,sites,devNotes,farmDocs,mapPins,paddocks,projects,pTasks,labour,mapCfg,farmProfile};}
-function applyState(s){if(s.animals)animals=s.animals;if(s.events)events=s.events;if(s.deleted)deleted=s.deleted;if(s.alerts)alerts=s.alerts;if(s.vets)vets=s.vets;if(s.tasks)tasks=s.tasks;if(s.circles)circles=s.circles;if(s.reminders)reminders=s.reminders;if(s.breedings)breedings=s.breedings;if(s.taskHistory)taskHistory=s.taskHistory;if(s.inbox)inbox=s.inbox;if(s.inventory)inventory=s.inventory;if(s.orders)orders=s.orders;if(s.calEvents)calEvents=s.calEvents;if(s.dayPlans)dayPlans=s.dayPlans;if(s.defects)defects=s.defects;if(s.sites)sites=s.sites;if(s.devNotes)devNotes=s.devNotes;if(s.farmDocs)farmDocs=s.farmDocs;if(s.mapPins)mapPins=s.mapPins;if(s.paddocks)paddocks=s.paddocks;if(s.projects)projects=s.projects;if(s.pTasks)pTasks=s.pTasks;if(s.labour)labour=s.labour;if(s.mapCfg)mapCfg=s.mapCfg;if(s.farmProfile)farmProfile=s.farmProfile;}
+function curState(){return {animals,events,deleted,alerts,vets,tasks,circles,reminders,breedings,taskHistory,inbox,inventory,orders,calEvents,dayPlans,defects,sites,devNotes,farmDocs,mapPins,paddocks,projects,pTasks,labour,vaxRecords,mapCfg,farmProfile};}
+function applyState(s){if(s.animals)animals=s.animals;if(s.events)events=s.events;if(s.deleted)deleted=s.deleted;if(s.alerts)alerts=s.alerts;if(s.vets)vets=s.vets;if(s.tasks)tasks=s.tasks;if(s.circles)circles=s.circles;if(s.reminders)reminders=s.reminders;if(s.breedings)breedings=s.breedings;if(s.taskHistory)taskHistory=s.taskHistory;if(s.inbox)inbox=s.inbox;if(s.inventory)inventory=s.inventory;if(s.orders)orders=s.orders;if(s.calEvents)calEvents=s.calEvents;if(s.dayPlans)dayPlans=s.dayPlans;if(s.defects)defects=s.defects;if(s.sites)sites=s.sites;if(s.devNotes)devNotes=s.devNotes;if(s.farmDocs)farmDocs=s.farmDocs;if(s.mapPins)mapPins=s.mapPins;if(s.paddocks)paddocks=s.paddocks;if(s.projects)projects=s.projects;if(s.pTasks)pTasks=s.pTasks;if(s.labour)labour=s.labour;if(s.vaxRecords)vaxRecords=s.vaxRecords;if(s.mapCfg)mapCfg=s.mapCfg;if(s.farmProfile)farmProfile=s.farmProfile;}
 function mergeById(a,b){const m={};(b||[]).forEach(x=>m[x.id]=x);(a||[]).forEach(x=>{const ex=m[x.id];if(!ex||(x._u||0)>=(ex._u||0))m[x.id]=x;});return Object.values(m);}
 function mergeStates(a,b){
   const del=Array.from(new Set([...(a.deleted||[]),...(b.deleted||[])]));
   const em={};[...(b.events||[]),...(a.events||[])].forEach(e=>{em[e.id]=e;});
   const evs=Object.values(em).filter(e=>!del.includes(e.id));
   const animalsM=mergeById(a.animals,b.animals).filter(x=>!del.includes('animal:'+x.id));
-  return {animals:animalsM,events:evs,deleted:del,alerts:mergeById(a.alerts,b.alerts),vets:mergeById(a.vets,b.vets),tasks:mergeById(a.tasks,b.tasks),circles:mergeById(a.circles,b.circles),reminders:mergeById(a.reminders,b.reminders),breedings:mergeById(a.breedings,b.breedings),taskHistory:mergeById(a.taskHistory,b.taskHistory),inbox:mergeById(a.inbox,b.inbox).filter(x=>!x._d),inventory:mergeById(a.inventory,b.inventory),orders:mergeById(a.orders,b.orders),calEvents:mergeById(a.calEvents,b.calEvents),dayPlans:mergeById(a.dayPlans,b.dayPlans),defects:mergeById(a.defects,b.defects),sites:mergeById(a.sites,b.sites),devNotes:mergeById(a.devNotes,b.devNotes),farmDocs:mergeById(a.farmDocs,b.farmDocs),mapPins:mergeById(a.mapPins,b.mapPins),paddocks:mergeById(a.paddocks,b.paddocks),projects:mergeById(a.projects,b.projects),pTasks:mergeById(a.pTasks,b.pTasks),labour:mergeById(a.labour,b.labour),mapCfg:((a.mapCfg&&b.mapCfg)?(((a.mapCfg._u||0)>=(b.mapCfg._u||0))?a.mapCfg:b.mapCfg):(a.mapCfg||b.mapCfg||null)),farmProfile:((a.farmProfile&&b.farmProfile)?(((a.farmProfile._u||0)>=(b.farmProfile._u||0))?a.farmProfile:b.farmProfile):(a.farmProfile||b.farmProfile||null))};
+  return {animals:animalsM,events:evs,deleted:del,alerts:mergeById(a.alerts,b.alerts),vets:mergeById(a.vets,b.vets),tasks:mergeById(a.tasks,b.tasks),circles:mergeById(a.circles,b.circles),reminders:mergeById(a.reminders,b.reminders),breedings:mergeById(a.breedings,b.breedings),taskHistory:mergeById(a.taskHistory,b.taskHistory),inbox:mergeById(a.inbox,b.inbox).filter(x=>!x._d),inventory:mergeById(a.inventory,b.inventory),orders:mergeById(a.orders,b.orders),calEvents:mergeById(a.calEvents,b.calEvents),dayPlans:mergeById(a.dayPlans,b.dayPlans),defects:mergeById(a.defects,b.defects),sites:mergeById(a.sites,b.sites),devNotes:mergeById(a.devNotes,b.devNotes),farmDocs:mergeById(a.farmDocs,b.farmDocs),mapPins:mergeById(a.mapPins,b.mapPins),paddocks:mergeById(a.paddocks,b.paddocks),projects:mergeById(a.projects,b.projects),pTasks:mergeById(a.pTasks,b.pTasks),labour:mergeById(a.labour,b.labour),vaxRecords:mergeById(a.vaxRecords,b.vaxRecords),mapCfg:((a.mapCfg&&b.mapCfg)?(((a.mapCfg._u||0)>=(b.mapCfg._u||0))?a.mapCfg:b.mapCfg):(a.mapCfg||b.mapCfg||null)),farmProfile:((a.farmProfile&&b.farmProfile)?(((a.farmProfile._u||0)>=(b.farmProfile._u||0))?a.farmProfile:b.farmProfile):(a.farmProfile||b.farmProfile||null))};
 }
 
 /* ===== SYNC (Supabase REST + polling) ===== */
-let sync={url:'',key:'',room:'gnr-shefford',on:false,status:'offline',last:0};
+let sync={url:'',key:'',room:'gnr-shefford',on:false,status:'offline',last:0,lastOk:0};
 function loadSyncCfg(){try{const c=JSON.parse(Local.get('sync:config')||'{}');sync.url=c.url||'';sync.key=c.key||'';sync.room=c.room||'gnr-shefford';sync.on=!!(sync.url&&sync.key);}catch(e){}}
 /* ===== ONE-TAP DEVICE INVITE ===== */
 function applyCfgFromHash(){
@@ -787,7 +801,26 @@ async function inviteDevice(){
   openSheet();
 }
 function saveSyncCfg(){Local.set('sync:config',JSON.stringify({url:sync.url,key:sync.key,room:sync.room}));}
-function setStatus(s){sync.status=s;const p=document.getElementById('syncPill');const t=document.getElementById('syncTxt');p.className='syncpill '+s;t.textContent=({synced:'Synced',syncing:'Syncing…',error:'Sync error',offline:'Offline'})[s]||s;}
+function setStatus(s){sync.status=s;const p=document.getElementById('syncPill');const t=document.getElementById('syncTxt');if(p)p.className='syncpill '+s;if(t)t.textContent=({synced:'Synced',syncing:'Syncing…',error:'Sync error',offline:'Offline'})[s]||s;if(s==='synced')sync.lastOk=Date.now();renderSyncWarn();}
+function buildSyncWarn(){
+  if(document.getElementById('syncWarn'))return;
+  const b=document.createElement('div');b.id='syncWarn';
+  b.style.cssText='display:none;position:fixed;top:0;left:0;right:0;z-index:900;background:#8a5a00;color:#fff;font-size:12.5px;font-weight:700;padding:10px 12px;align-items:center;justify-content:space-between;gap:10px;box-shadow:0 2px 10px rgba(0,0,0,.35)';
+  b.innerHTML='<span id="syncWarnTxt" style="flex:1;line-height:1.3">⚠ Not synced</span><button class="btn" data-a="syncRetry" style="margin:0;padding:7px 14px;min-height:0;background:#fff;color:#8a5a00">Retry</button>';
+  document.body.insertBefore(b,document.body.firstChild);
+}
+function renderSyncWarn(){
+  const el=document.getElementById('syncWarn');if(!el)return;
+  const stale=sync.on&&authed()&&sync.status==='error'&&sync.lastOk&&(Date.now()-sync.lastOk>300000);
+  if(stale){const since=new Date(sync.lastOk).toLocaleTimeString('en-CA',{hour:'2-digit',minute:'2-digit'});const tx=document.getElementById('syncWarnTxt');if(tx)tx.textContent='⚠ Not synced since '+since+' — phones may differ. Tap retry.';el.style.display='flex';}
+  else{el.style.display='none';}
+}
+async function syncRetry(){
+  if(!sync.on){toast('Sync is off');return;}
+  setStatus('syncing');
+  try{const remote=await API.pull();const merged=remote?mergeStates(curState(),remote):curState();applyState(merged);await API.push(curState());await Store.set('state:v2',JSON.stringify(curState()));setStatus('synced');renderFeed();renderHerd();toast('✓ Synced');}
+  catch(e){setStatus('error');toast('Still offline — will keep retrying automatically');}
+}
 /* ===== AUTH (Supabase email/password, JWT) ===== */
 let auth={token:'',refresh:'',exp:0,email:''};
 function loadAuth(){try{const a=JSON.parse(Local.get('hh:sess')||'{}');auth.token=a.token||'';auth.refresh=a.refresh||'';auth.exp=a.exp||0;auth.email=a.email||'';}catch(e){}}
@@ -813,16 +846,18 @@ async function ensureAuth(){
   if(!navigator.onLine)return true; /* trust stored session offline */
   return await authRefresh()||true;
 }
+function normEmail(v){v=(v||'').trim();if(!v)return'';return v.indexOf('@')>-1?v:(v.toLowerCase().replace(/[^a-z0-9._-]/g,'')+'@gnr.suite');}
 async function doLogin(){
-  const em=(document.getElementById('lgEmail')||{}).value||'',pw=(document.getElementById('lgPass')||{}).value||'';
-  if(!em.trim()||!pw){lgError('Email and password required');return;}
+  const raw=(document.getElementById('lgEmail')||{}).value||'',pw=(document.getElementById('lgPass')||{}).value||'';
+  const em=normEmail(raw);
+  if(!em||!pw){lgError('Enter your farm code (or email) and password');return;}
   if(!sync.url||!sync.key){lgError('Sync is not configured on this device yet (⚙️ → Set up sync first).');return;}
   const btn=document.getElementById('lgBtn');if(btn)btn.textContent='Signing in…';
   try{
-    const r=await fetch(`${sync.url}/auth/v1/token?grant_type=password`,{method:'POST',headers:{'apikey':sync.key,'Content-Type':'application/json'},body:JSON.stringify({email:em.trim(),password:pw})});
+    const r=await fetch(`${sync.url}/auth/v1/token?grant_type=password`,{method:'POST',headers:{'apikey':sync.key,'Content-Type':'application/json'},body:JSON.stringify({email:em,password:pw})});
     const j=await r.json().catch(()=>({}));
-    if(!r.ok||!j.access_token){lgError(j.error_description||j.msg||'Sign-in failed — check email/password.');if(btn)btn.textContent='🔐 Sign in';return;}
-    auth.token=j.access_token;auth.refresh=j.refresh_token||'';auth.exp=Date.now()+(((j.expires_in||3600)-60)*1000);auth.email=em.trim();saveAuth();
+    if(!r.ok||!j.access_token){lgError(j.error_description||j.msg||'Sign-in failed — check your code/password.');if(btn)btn.textContent='🔐 Sign in';return;}
+    auth.token=j.access_token;auth.refresh=j.refresh_token||'';auth.exp=Date.now()+(((j.expires_in||3600)-60)*1000);auth.email=em;saveAuth();
     hideGate();renderAuthLine();toast('🔐 Signed in');
     await persistData();startPoll();mediaKick();
   }catch(e){lgError('Network error — are you online?');}
@@ -854,18 +889,19 @@ function gateToggle(){
   const er=document.getElementById('lgErr');if(er)er.style.display='none';
 }
 async function doSignup(){
-  const em=(document.getElementById('lgEmail')||{}).value||'',pw=(document.getElementById('lgPass')||{}).value||'',p2=(document.getElementById('lgPass2')||{}).value||'';
-  if(!em.trim()||!pw){lgError('Email and password required');return;}
+  const raw=(document.getElementById('lgEmail')||{}).value||'',pw=(document.getElementById('lgPass')||{}).value||'',p2=(document.getElementById('lgPass2')||{}).value||'';
+  const em=normEmail(raw);
+  if(!em||!pw){lgError('Enter your farm code (or email) and password');return;}
   if(pw.length<6){lgError('Password: at least 6 characters');return;}
   if(pw!==p2){lgError('Passwords do not match');return;}
   if(!sync.url||!sync.key){lgError('Open the invite link first — it carries the farm connection.');return;}
   const btn=document.getElementById('suBtn');if(btn)btn.textContent='Creating…';
   try{
-    const r=await fetch(`${sync.url}/auth/v1/signup`,{method:'POST',headers:{'apikey':sync.key,'Content-Type':'application/json'},body:JSON.stringify({email:em.trim(),password:pw})});
+    const r=await fetch(`${sync.url}/auth/v1/signup`,{method:'POST',headers:{'apikey':sync.key,'Content-Type':'application/json'},body:JSON.stringify({email:em,password:pw})});
     const j=await r.json().catch(()=>({}));
     if(!r.ok){lgError(j.error_description||j.msg||'Sign-up failed — account may exist (try Sign in) or sign-ups are disabled.');}
     else if(j.access_token){
-      auth.token=j.access_token;auth.refresh=j.refresh_token||'';auth.exp=Date.now()+(((j.expires_in||3600)-60)*1000);auth.email=em.trim();saveAuth();
+      auth.token=j.access_token;auth.refresh=j.refresh_token||'';auth.exp=Date.now()+(((j.expires_in||3600)-60)*1000);auth.email=em;saveAuth();
       hideGate();renderAuthLine();toast('🎉 Account created — welcome!');
       await persistData();startPoll();mediaKick();
     }
@@ -971,6 +1007,7 @@ function openProfile(id){
       <div class="seclabel" style="margin-top:0">Photos</div>
       <div class="gallery">${(a.photos&&a.photos.length?a.photos:(a.photo?[{id:'legacy',data:a.photo}]:[])).map(p=>`<div class="gthumb" style="background-image:url('${photoSrc(p)}')" data-a="enlargePhoto" data-p="${a.id}|${p.id}"></div>`).join('')}<div class="gthumb gadd" data-a="pickPhoto" data-p="${a.id}">＋</div></div>
       ${docsHTML(a)}
+      ${clipsHTML(a)}
       <button class="btn" data-a="estWeight" data-p="${a.id}" style="margin-bottom:13px">📏 Estimate weight (tape formula)</button>
       <div class="info-card">
       <div class="info-row"><span class="k">Sex</span><span class="v">${esc(a.sex)}</span></div>
@@ -1023,7 +1060,8 @@ function openQuickCapture(){
   const opts='<option value="">— pick or say the animal —</option>'+animals.map(a=>`<option value="${a.id}">${a.emoji} ${esc(a.name)}${a.tag?' #'+a.tag:''}</option>`).join('');
   document.getElementById('sheet').innerHTML=`<div class="grab"></div><h3>⚡ Quick capture</h3>
     <p class="lead">Snap a photo, say the animal's name or tag, dictate a note — it files itself to that animal.</p>
-    <div class="qc-cam" data-a="qcCapture">📷 Take / choose a photo</div>
+    <div class="qc-cam" data-a="qcCapture" data-p="cam">📷 Take a photo</div>
+    <div class="qc-cam" data-a="qcCapture" data-p="gal" style="margin-top:6px">🖼️ Choose from gallery</div>
     <div id="qcPreviewWrap"></div>
     <label class="fl">Animal — type or 🎤 say the name / tag</label>
     <div class="field-row"><input class="field" id="qcMatch" placeholder="e.g. 5552 or Louise"><button class="mini-mic" id="qcMatchMic" data-a="dictate" data-p="qcMatch">🎤</button></div>
@@ -1044,31 +1082,50 @@ function matchAnimal(text){
   if(!hit){const w=q.split(/\s+/)[0];if(w.length>=3)hit=animals.find(a=>a.name.toLowerCase().includes(w));}
   return hit?hit.id:'';
 }
-let qcSnap=null;
-function qcCapture(){
+let qcSnap=null,qcDirty=false;
+function qcCapture(src){
   qcSnap={match:(document.getElementById('qcMatch')||{}).value||'',animal:(document.getElementById('qcAnimal')||{}).value||'',note:(document.getElementById('qcNote')||{}).value||''};
   if(!qcInput){qcInput=document.createElement('input');qcInput.type='file';qcInput.accept='image/*';qcInput.style.display='none';document.body.appendChild(qcInput);qcInput.addEventListener('change',qcOnPhoto);}
+  if(src==='cam')qcInput.setAttribute('capture','environment');else qcInput.removeAttribute('capture');
   qcInput.value='';qcInput.click();
 }
 function qcOnPhoto(e){
   const f=e.target.files&&e.target.files[0];if(!f)return;
   readPhoto(f,data=>{
     openQuickCapture();
-    qcPhoto=data;
+    qcPhoto=data;qcDirty=true;
     if(qcSnap){const m=document.getElementById('qcMatch');if(m)m.value=qcSnap.match;const a=document.getElementById('qcAnimal');if(a&&qcSnap.animal)a.value=qcSnap.animal;const n=document.getElementById('qcNote');if(n)n.value=qcSnap.note;}
     const wrap=document.getElementById('qcPreviewWrap');if(wrap)wrap.innerHTML=`<img class="qc-preview" src="${qcPhoto}" alt="">`;
     toast('📷 Photo ready');
   });
 }
 async function qcSave(){
+  const note=(document.getElementById('qcNote')||{}).value.trim();
   const id=document.getElementById('qcAnimal').value||matchAnimal(document.getElementById('qcMatch').value);
-  if(!id){toast('Pick which animal');return;}
-  const note=document.getElementById('qcNote').value.trim();
+  if(!id){
+    if(qcPhoto){const ok=await inboxFromPhoto(qcPhoto,note);qcDirty=false;qcPhoto=null;closeSheet();openInbox();toast(ok?'📥 No match — saved to the Inbox to sort later':'📥 Sent to the Inbox');}
+    else toast('Pick which animal (or add a photo to send it to the Inbox)');
+    return;
+  }
   if(!qcPhoto&&!note){toast('Add a photo or a note');return;}
   const a=animalById(id);
-  if(qcPhoto){a.photos=a.photos||[];if(a.photo&&!a.photos.length)a.photos.push({id:'ph0',data:a.photo,by:'',ts:Date.now()});const ph=await savePhotoAsset(qcPhoto,'animal',id,signature());a.photos.push(ph);if(!a.photo)a.photo=ph.thumb||ph.data||'';a._u=Date.now();}
-  events.push({id:'e'+Date.now()+Math.floor(Math.random()*999),animalId:id,type:'note',text:note||'Quick photo added',value:'',ts:Date.now(),by:signature()});
-  await persistData();closeSheet();renderFeed();renderHerd();openProfile(id);toast('✓ Filed to '+a.name);
+  try{
+    if(qcPhoto){a.photos=a.photos||[];if(a.photo&&!a.photos.length)a.photos.push({id:'ph0',data:a.photo,by:'',ts:Date.now()});const ph=await savePhotoAsset(qcPhoto,'animal',id,signature());a.photos.push(ph);if(!a.photo)a.photo=ph.thumb||ph.data||'';a._u=Date.now();}
+    events.push({id:'e'+Date.now()+Math.floor(Math.random()*999),animalId:id,type:'note',text:note||'Quick photo added',value:'',ts:Date.now(),by:signature()});
+    qcDirty=false;await persistData();closeSheet();renderFeed();renderHerd();openProfile(id);toast('✓ Filed to '+a.name);
+  }catch(e){
+    if(qcPhoto)await inboxFromPhoto(qcPhoto,note);
+    qcDirty=false;qcPhoto=null;closeSheet();openInbox();toast('⚠ Saved to the Inbox instead (filing hit an error)');
+  }
+}
+async function inboxFromPhoto(data,note){
+  try{
+    const ph=await savePhotoAsset(data,'inbox','',signature());
+    inbox.push({id:'ib'+Date.now()+Math.floor(Math.random()*9999),photo:ph.thumb||ph.data||data,photoRef:ph.ref||'',note:note||'',by:signature(),ts:Date.now(),_u:Date.now(),_d:false});
+    await persistData();renderHerd();return true;
+  }catch(e){
+    try{inbox.push({id:'ib'+Date.now()+Math.floor(Math.random()*9999),photo:data,photoRef:'',note:note||'',by:signature(),ts:Date.now(),_u:Date.now(),_d:false});await persistData();renderHerd();return true;}catch(e2){return false;}
+  }
 }
 /* ===== INBOX — capture without naming, sort later ===== */
 let ibInput=null;
@@ -1080,9 +1137,8 @@ function quickShot(){
 function ibOnPhoto(e){
   const f=e.target.files&&e.target.files[0];if(!f)return;
   readPhoto(f,async data=>{
-    const ph=await savePhotoAsset(data,'inbox','',signature());
-    inbox.push({id:'ib'+Date.now(),photo:ph.thumb||ph.data||data,photoRef:ph.ref||'',note:'',by:signature(),ts:Date.now(),_u:Date.now(),_d:false});
-    await persistData();renderHerd();openInbox();toast('📥 Saved to inbox — sort it later');
+    const ok=await inboxFromPhoto(data);
+    openInbox();toast(ok?'📥 Saved to the Inbox — sort it later':'⚠ Could not save the photo');
   });
 }
 function openInbox(){
@@ -1272,6 +1328,143 @@ async function delDoc(animalId,docId){
   else{const a=animalById(animalId);if(a){a.docs=(a.docs||[]).filter(x=>x.id!==docId);a._u=Date.now();}}
   await persistData();closeSheet();if(animalId==='_farm')renderCal();else openProfile(animalId);toast('Deleted');
 }
+/* ===== REFERENCE CLIPS — short videos (gait, sounds, behaviour) ===== */
+function extFromMime(m){
+  m=m||'';
+  if(/mp4/.test(m))return'mp4';if(/webm/.test(m))return'webm';
+  if(/quicktime|mov/.test(m))return'mov';if(/png/.test(m))return'png';
+  if(/jpeg|jpg/.test(m))return'jpg';return'jpg';
+}
+function clipDuration(file){
+  return new Promise(res=>{
+    try{
+      const url=URL.createObjectURL(file);const v=document.createElement('video');v.preload='metadata';
+      v.onloadedmetadata=()=>{const d=v.duration;try{URL.revokeObjectURL(url);}catch(e){}res(d||0);};
+      v.onerror=()=>{try{URL.revokeObjectURL(url);}catch(e){}res(0);};
+      v.src=url;setTimeout(()=>res(0),1200);
+    }catch(e){res(0);}
+  });
+}
+function saveClipAsset(file,refId,by){
+  return new Promise(res=>{
+    mediaInit();
+    const id='cl'+Date.now()+Math.floor(Math.random()*9999);
+    const finalize=(poster)=>{
+      if(!mdb||!mdb.photoBlobs){res({id,kind:'clip',mime:file.type||'',thumb:poster||'',by:by||signature(),ts:Date.now()});return;}
+      mdb.photoBlobs.put({localId:id,blob:file})
+        .then(()=>mdb.photos.put({localId:id,refId:refId||'',kind:'clip',mime:file.type||'video/mp4',createdAt:Date.now(),syncStatus:'pending',size:file.size||0}))
+        .then(()=>mdb.syncQueue.add({localId:id,action:'UPLOAD_PHOTO',status:'pending',tries:0,createdAt:Date.now()}))
+        .then(()=>{
+          try{blobURLs[id]=URL.createObjectURL(file);}catch(e){}
+          res({id,ref:id,kind:'clip',mime:file.type||'video/mp4',thumb:poster||'',by:by||signature(),ts:Date.now()});
+          mediaKick();
+        }).catch(()=>res({id,kind:'clip',mime:file.type||'',thumb:poster||'',by:by||signature(),ts:Date.now()}));
+    };
+    let done=false;const fin=p=>{if(done)return;done=true;finalize(p);};
+    try{
+      const url=URL.createObjectURL(file);
+      const v=document.createElement('video');
+      v.preload='metadata';v.muted=true;v.playsInline=true;
+      v.onloadeddata=()=>{try{v.currentTime=Math.min(0.3,(v.duration||1)/2);}catch(e){fin(null);}};
+      v.onseeked=()=>{
+        try{
+          const max=140;let w=v.videoWidth,hh=v.videoHeight;
+          if(!w||!hh){fin(null);return;}
+          if(w>hh&&w>max){hh=hh*max/w;w=max;}else if(hh>max){w=w*max/hh;hh=max;}
+          const c=document.createElement('canvas');c.width=w;c.height=hh;
+          const x=c.getContext&&c.getContext('2d');if(!x){fin(null);return;}
+          x.drawImage(v,0,0,w,hh);fin(c.toDataURL('image/jpeg',0.6));
+        }catch(e){fin(null);}
+        finally{try{URL.revokeObjectURL(url);}catch(e){}}
+      };
+      v.onerror=()=>{fin(null);try{URL.revokeObjectURL(url);}catch(e){}};
+      v.src=url;
+      setTimeout(()=>{fin(null);try{URL.revokeObjectURL(url);}catch(e){}},1500);
+    }catch(e){fin(null);}
+  });
+}
+function clipsHTML(a){
+  const clips=(a.clips||[]).filter(c=>!c._d);
+  return `<div class="seclabel">🎬 Reference clips (${clips.length})</div><div class="gallery">${clips.map(c=>`<div class="gthumb clip" style="background-image:url('${photoSrc(c)||''}');background-color:#1b2a22" data-a="viewClip" data-p="${a.id}|${c.id}">${c.note?`<span class="doc-chip" style="position:absolute;left:4px;bottom:4px;right:4px;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;z-index:1">${esc(c.note)}</span>`:''}</div>`).join('')}<div class="gthumb gadd" data-a="pickClip" data-p="${a.id}">＋</div></div>`;
+}
+let clipTarget=null,clipInput=null,clipPendingNote='';
+function pickClip(animalId){
+  clipTarget=animalId;
+  document.getElementById('sheet').innerHTML=`<div class="grab"></div><h3>🎬 Add a reference clip</h3>
+    <p class="lead">A few seconds is enough — gait/lameness check, breathing sounds, behaviour. Keep it under ~60 s so it syncs well on farm internet.</p>
+    <label class="fl">What does this clip show?</label><input class="field" id="clipNote" placeholder="e.g. Gait check — slight limp front-left, before treatment">
+    <button class="btn clay" data-a="clipChoose" data-p="cam">📷 Record with camera</button>
+    <button class="btn ghost" data-a="clipChoose" data-p="gal">🎞️ Choose video from gallery</button>
+    <button class="btn ghost" data-a="closeSheet">Cancel</button>`;
+  openSheet();
+}
+function clipChoose(src){
+  clipPendingNote=(document.getElementById('clipNote')||{}).value.trim();
+  if(!clipInput){clipInput=document.createElement('input');clipInput.type='file';clipInput.accept='video/*';clipInput.style.display='none';document.body.appendChild(clipInput);clipInput.addEventListener('change',onClip);}
+  if(src==='cam')clipInput.setAttribute('capture','environment');else clipInput.removeAttribute('capture');
+  clipInput.value='';clipInput.click();
+}
+async function onClip(e){
+  const f=e.target.files&&e.target.files[0];if(!f)return;
+  if(f.type&&!/^video\//.test(f.type)){toast('Please choose a video file');return;}
+  if(f.size&&f.size>25*1024*1024){toast('🎬 Clip too large ('+Math.round(f.size/1048576)+' MB). Record a shorter clip — about 60 seconds max.');return;}
+  if(!mdb||!mdb.photoBlobs){toast('Video storage needs this browser\'s local storage (IndexedDB) — try a different browser');return;}
+  try{const dur=await clipDuration(f);if(dur&&dur>75){toast('🎬 That clip is ~'+Math.round(dur)+'s — keeping it, but ≈60 s syncs best on farm internet.');}}catch(_){}
+  toast('🎬 Saving clip…');
+  const c=await saveClipAsset(f,clipTarget,signature());
+  c.note=clipPendingNote||'';
+  const a=animalById(clipTarget);if(!a)return;
+  a.clips=a.clips||[];a.clips.push(c);a._u=Date.now();
+  try{ledgerLog('animal',clipTarget,'clip',{note:c.note,mime:c.mime},signature());}catch(err){}
+  await persistData();openProfile(clipTarget);toast('🎬 Clip added');
+}
+async function viewClip(animalId,clipId){
+  const a=animalById(animalId);if(!a)return;
+  const c=(a.clips||[]).find(x=>x.id===clipId);if(!c)return;
+  const src=await photoFull(c);
+  const isVideo=!c.mime||/^video\//.test(c.mime);
+  document.getElementById('sheet').innerHTML=`<div class="grab"></div><h3>🎬 ${esc(a.name)}</h3>
+    ${src&&isVideo?`<video class="qc-preview" src="${src}" controls playsinline></video>`:src?`<img class="qc-preview" src="${src}">`:`<p class="lead">Not downloaded to this device yet — open with internet once.</p>`}
+    ${c.note?`<p class="lead">${esc(c.note)}</p>`:''}
+    ${c.by?`<p class="lead" style="font-size:11px">Added by ${esc(c.by)}${c.ts?' · '+fmtDate(c.ts):''}</p>`:''}
+    <button class="btn ghost" data-a="delClip" data-p="${animalId}|${clipId}">🗑 Delete clip</button>
+    <button class="btn ghost" data-a="closeSheet">Close</button>`;
+  openSheet();
+}
+async function delClip(animalId,clipId){
+  const a=animalById(animalId);if(!a)return;
+  a.clips=(a.clips||[]).filter(x=>x.id!==clipId);a._u=Date.now();
+  await persistData();openProfile(animalId);toast('Clip deleted');
+}
+/* ===== START A NEW FILE FROM A PHOTO ONLY ===== */
+let dossierInput=null;
+function startDossier(){
+  document.getElementById('sheet').innerHTML=`<div class="grab"></div><h3>📸 Start a new file</h3>
+    <p class="lead">For an animal you don't recognize yet — snap a photo now, sort the name & tag later (see the "Incomplete" filter in the herd).</p>
+    <button class="btn clay" data-a="dossierShot" data-p="cam">📷 Take a photo</button>
+    <button class="btn ghost" data-a="dossierShot" data-p="gal">🖼️ Choose from gallery</button>
+    <button class="btn ghost" data-a="closeSheet">Cancel</button>`;
+  openSheet();
+}
+function dossierShot(src){
+  if(!dossierInput){dossierInput=document.createElement('input');dossierInput.type='file';dossierInput.accept='image/*';dossierInput.style.display='none';document.body.appendChild(dossierInput);dossierInput.addEventListener('change',onDossier);}
+  if(src==='cam')dossierInput.setAttribute('capture','environment');else dossierInput.removeAttribute('capture');
+  dossierInput.value='';dossierInput.click();
+}
+function onDossier(e){
+  const f=e.target.files&&e.target.files[0];if(!f)return;
+  readPhoto(f,async data=>{
+   try{
+    const name='Unnamed '+(animals.filter(x=>/^Unnamed /.test(x.name)).length+1);
+    const ph=await savePhotoAsset(data,'animal','',signature());
+    const a={id:'a'+Date.now()+Math.floor(Math.random()*99),name,tag:'',cat:'Cows',emoji:'🐄',sex:'—',age:'—',breed:'—',color:'—',dam:'—',status:'ok',note:'Started from a photo — edit to fill in details.',photos:[ph],photo:ph.thumb||ph.data||'',_u:Date.now()};
+    animals.push(a);
+    events.push({id:'e'+Date.now()+Math.floor(Math.random()*99),animalId:a.id,type:'arrival',text:name+' — new file started from a photo.',value:'',ts:Date.now(),by:signature()});
+    try{ledgerLog('animal',a.id,'arrival',{name,photo:true},signature());}catch(err){}
+    closeSheet();await persistData();renderHerd();renderFeed();openProfile(a.id);toast('📸 New file started — edit to name it');
+   }catch(e){await inboxFromPhoto(data);closeSheet();openInbox();toast('⚠ Saved the photo to the Inbox instead');}
+  });
+}
 function docsHTML(a){
   const docs=(a.docs||[]).filter(d=>!d._d);
   return `<div class="seclabel">📄 Documents (${docs.length})</div><div class="gallery">${docs.map(d=>`<div class="gthumb" style="background-image:url('${photoSrc(d)}')" data-a="viewDoc" data-p="${a.id}|${d.id}"><span class="doc-chip" style="position:absolute;left:4px;top:4px">${docLabel(d.type).split(' ')[0]}</span></div>`).join('')}<div class="gthumb gadd" data-a="pickDoc" data-p="${a.id}">＋</div></div>`;
@@ -1284,8 +1477,10 @@ function renderFarmDocs(){
 
 /* ===== GOD MODE — bulk classify (desktop-first) ===== */
 let godInput=null;
-function godShot(){
-  if(!godInput){godInput=document.createElement('input');godInput.type='file';godInput.accept='image/*';godInput.multiple=true;godInput.style.display='none';document.body.appendChild(godInput);godInput.addEventListener('change',godOnFiles);}
+function godShot(src){
+  if(!godInput){godInput=document.createElement('input');godInput.type='file';godInput.accept='image/*';godInput.style.display='none';document.body.appendChild(godInput);godInput.addEventListener('change',godOnFiles);}
+  if(src==='cam'){godInput.multiple=false;godInput.setAttribute('capture','environment');}
+  else{godInput.multiple=true;godInput.removeAttribute('capture');}
   godInput.value='';godInput.click();
 }
 function godOnFiles(e){
@@ -1830,6 +2025,8 @@ async function loadBridge(siteId){
     const notes=(d.notes||[]).slice(-5).reverse();
     box.innerHTML=`<div class="stat-line ${lv==='full'||lv==='overflow'?'warn':'ok'}"><span>🛏️</span> Partner litter level: <b style="margin-left:4px">${lv==='—'?'not reported yet':esc(lv)}</b>${d.litterBy?` <span style="font-size:10px;color:var(--ink2)">· ${esc(d.litterBy)} ${d.litterAt?new Date(d.litterAt).toLocaleString('en-CA',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):''}</span>`:''}</div>
       <div class="row2" style="margin:8px 0"><select class="field" id="plLv" style="margin:0"><option value="low">Low</option><option value="half">Half</option><option value="full" ${lv==='full'?'selected':''}>Full — ready</option><option value="overflow">Overflowing</option></select><button class="btn" data-a="plinkLitter" data-p="${siteId}" style="margin:0">Report my level</button></div>
+      <button class="btn" data-a="wasteLoad" data-p="site|${siteId}" style="margin-bottom:6px">⚖️ Log a collected load (kg → CO2e)</button>
+      ${loadsHTML(d)}
       ${notes.length?`<div class="seclabel" style="margin-top:10px">💬 Shared notes</div>`+notes.map(n=>`<div class="pl" style="padding:7px 2px"><span class="k">${esc(n.t)}</span><span class="v" style="font-size:10px">${esc(n.by||'')}</span></div>`).join(''):''}
       <div class="row2" style="margin-top:8px"><input class="field" id="plNote" style="margin:0" placeholder="Message to partner…"><button class="btn" data-a="plinkNote" data-p="${siteId}" style="margin:0">Send</button></div>
       <button class="btn ghost" data-a="plinkRefresh" data-p="${siteId}" style="margin-top:8px">🔄 Refresh</button>`;
@@ -1845,6 +2042,115 @@ async function invitePartner(siteId){
 }
 /* ===== PARTNER (EQUESTRIAN) PORTAL — manure/litter side ===== */
 function pHost(){return Local.get('hh:phost')||'';}
+/* ===== LIVE CARBON ENGINE — SPEDE-style ESTIMATE (AR5, GWP CH4 = 28) =====
+   ⚠ EF values are internal estimates pending verifier calibration — every figure
+   produced is labelled "estimation". */
+const GWP_CH4=28;
+const WASTE_EF={manure:0.030,hemp_bedding:0.060,food_waste:0.140,mixed_organic:0.080};
+const WASTE_LABEL={manure:'🐴 Manure',hemp_bedding:'🌿 Hemp bedding',food_waste:'🍽️ Food waste',mixed_organic:'♻️ Mixed organic'};
+function calcCO2e(cat,kg,km){
+  const t=(parseFloat(kg)||0)/1000;
+  const avoided=t*(WASTE_EF[cat]||0.08)*GWP_CH4;
+  const transport=((parseFloat(km)||0)*t*0.12)/1000;
+  const net=Math.max(0,avoided-transport);
+  const r=x=>Math.round(x*10000)/10000;
+  return {net:r(net),avoided:r(avoided),transport:r(transport)};
+}
+function loadsHTML(d){
+  const ls=(d.loads||[]).slice(-3).reverse();
+  return ls.length?ls.map(l=>`<div class="pl" style="padding:6px 2px"><span class="k">⚖️ ${esc(String(l.kg))} kg ${WASTE_LABEL[l.cat]||''}</span><span class="v" style="font-size:10px">${l.co2e} tCO2e est. · ${esc(l.by||'')}</span></div>`).join(''):'';
+}
+function wasteLoad(ctx){
+  document.getElementById('sheet').innerHTML=`<div class="grab"></div><h3>⚖️ Log a collected load</h3>
+    <p class="lead">Weight + distance → avoided CO2e (internal estimate, AR5 GWP 28 — to be calibrated with a verifier). Written to the immutable ledger.</p>
+    <label class="fl">Material</label><select class="field" id="wlCat">${Object.keys(WASTE_EF).map(k=>`<option value="${k}">${WASTE_LABEL[k]}</option>`).join('')}</select>
+    <div class="row2"><div><label class="fl">Weight (kg)</label><input class="field" id="wlKg" inputmode="decimal" placeholder="e.g. 320"></div><div><label class="fl">Transport (km)</label><input class="field" id="wlKm" inputmode="decimal" placeholder="e.g. 12"></div></div>
+    <button class="btn clay" data-a="wlSave" data-p="${ctx}">Compute & log</button>
+    <button class="btn ghost" data-a="closeSheet">Cancel</button>`;
+  openSheet();
+}
+async function wlSave(kind,siteId){
+  const cat=(document.getElementById('wlCat')||{}).value||'mixed_organic';
+  const kg=parseFloat((document.getElementById('wlKg')||{}).value);
+  const km=parseFloat((document.getElementById('wlKm')||{}).value)||0;
+  if(!kg||kg<=0){toast('Enter the weight');return;}
+  const c=calcCO2e(cat,kg,km);
+  let room='',other='';
+  if(kind==='portal'){if(!pHost()){toast('No host farm linked');return;}room=bridgeId(sync.room,pHost());other=pHost();}
+  else{const s=siteById(siteId);if(!s||!s.linkRoom){toast('Site has no partner code');return;}room=bridgeId(sync.room,s.linkRoom);other=s.linkRoom;}
+  try{
+    const d=(await bridgeGet(room).catch(()=>null))||{};
+    d.loads=(d.loads||[]).slice(-29);
+    d.loads.push({id:'wl'+Date.now(),cat,kg,km,co2e:c.net,by:farmName(),ts:Date.now()});
+    await bridgeSet(room,d);
+  }catch(e){toast('Bridge unreachable — load kept in the ledger only');}
+  try{ledgerLog('waste',other,'waste_load',{cat,kg,km,co2e:c.net,avoided:c.avoided,transport:c.transport,partner:other},signature());}catch(e){}
+  closeSheet();toast('🌱 '+c.net+' tCO2e est. logged');
+  if(kind==='portal')renderPartnerPortal();else loadBridge(siteId);
+  carbonDash();
+}
+async function carbonDash(){
+  const el=document.getElementById('carbonDash');if(!el)return;
+  mediaInit();
+  if(!mdb||!mdb.observations){el.innerHTML='';return;}
+  try{
+    let obs=await mdb.observations.where('type').equals('waste_load').toArray();
+    let demo=false;
+    if(!obs.length){
+      if(PV.carbon){demo=true;obs=[{data:{kg:320,cat:'manure',co2e:0.2683}},{data:{kg:1450,cat:'food_waste',co2e:5.68}}];}
+      else{el.innerHTML='';return;}
+    }
+    PV.carbon=false;
+    let kg=0,co2=0,tCH4=0;const byCat={};
+    obs.forEach(o=>{const d=o.data||{};const w=parseFloat(d.kg)||0;kg+=w;co2+=parseFloat(d.co2e)||0;tCH4+=(w/1000)*(WASTE_EF[d.cat]||0.08);byCat[d.cat]=(byCat[d.cat]||0)+w;});
+    const m3=tCH4/0.000717, kwh=m3*10;
+    el.innerHTML=`<div class="proto active" style="margin-bottom:14px"><div class="proto-h"><span class="pe">🌱</span><b>Carbon — internal estimate</b><span class="who">${obs.length} loads</span></div><div class="proto-body">
+      <div class="pl"><span class="k">♻️ Organic matter diverted</span><span class="v">${Math.round(kg)} kg</span></div>
+      <div class="pl"><span class="k">🌍 Avoided CO2e (est., AR5)</span><span class="v"><b>${Math.round(co2*10000)/10000} t</b></span></div>
+      <div class="pl"><span class="k">⛽ Biogas potential (CH4)</span><span class="v"><b>${Math.round(m3*10)/10} m³</b></span></div>
+      <div class="pl"><span class="k">⚡ Energy equivalent</span><span class="v">≈ ${Math.round(kwh)} kWh</span></div>
+      ${demo?'<div class="stat-line warn" style="margin-top:6px"><span>👁</span> Preview with sample data — log real loads on the partner bridges to feed it.</div>':''}
+      ${Object.keys(byCat).map(k=>`<div class="pl" style="padding:5px 2px"><span class="k" style="font-size:11px">${WASTE_LABEL[k]||k}</span><span class="v" style="font-size:11px">${Math.round(byCat[k])} kg</span></div>`).join('')}
+      <p class="lead" style="font-size:10px;margin-top:6px">Figures from this device's immutable ledger. Emission factors pending verifier calibration — not a certified SPEDE claim.</p>
+    </div></div>`;
+  }catch(e){el.innerHTML='';}
+}
+/* ===== HARDWARE GATEWAY — Web Serial / Web Bluetooth (Phase 1 sensors) ===== */
+const HW={
+  async connectSerial(){
+    if(!('serial' in navigator)){toast('Web Serial not available on this device/browser');return;}
+    try{
+      const port=await navigator.serial.requestPort();
+      await port.open({baudRate:9600});
+      const dec=new TextDecoderStream();port.readable.pipeTo(dec.writable);
+      const reader=dec.readable.getReader();
+      toast('🔌 Serial sensor connected — listening');
+      ledgerLog('sensor','serial','sensor_paired',{proto:'serial'},'gateway');
+      this._listen(reader,'serial');
+    }catch(e){toast('Connection cancelled');}
+  },
+  async connectRfidBle(){
+    if(!navigator.bluetooth){toast('Web Bluetooth not available on this device/browser');return;}
+    try{
+      const dev=await navigator.bluetooth.requestDevice({acceptAllDevices:true});
+      toast('📡 '+(dev.name||'BLE device')+' paired');
+      ledgerLog('sensor',dev.id||'ble','sensor_paired',{proto:'ble',name:dev.name||''},'gateway');
+    }catch(e){toast('Pairing cancelled');}
+  },
+  async _listen(reader,proto){
+    try{
+      while(true){
+        const {value,done}=await reader.read();if(done)break;
+        if(value&&value.trim())ledgerLog('sensor',proto,'sensor_read',{raw:value.trim().slice(0,160),proto},'gateway');
+      }
+    }catch(e){}
+  }
+};
+function hwSerial(){HW.connectSerial();}
+function hwBle(){HW.connectRfidBle();}
+function pvVet(){closeSheet();PV.vet=true;goModule('vet');toast('👁 Vet portal — what your vet sees');}
+function pvPartner(){closeSheet();PV.partner=true;switchView('feed');toast('👁 Partner portal — what your partner sees');}
+function pvCarbon(){closeSheet();PV.carbon=true;goModule('cal');toast('👁 Carbon & gas dashboard');}
 /* ===== ANIMAL MARKET — shared network room ===== */
 const MARKET_ROOM='market:reseau';
 async function renderMarket(){
@@ -1899,20 +2205,31 @@ async function marketStatus(id,st){
 }
 async function renderPartnerPortal(){
   const el=document.getElementById('partnerPortal');if(!el)return;
-  if(whoRole()!=='Partner'||!pHost()){el.innerHTML='';return;}
-  const hn=Local.get('hh:phn')||pHost();
+  const force=PV.partner;PV.partner=false;
+  const real=(whoRole()==='Partner'&&pHost());
+  if(!real&&!force){el.innerHTML='';return;}
+  const demo=force&&!real;
+  const hn=demo?'GNR Shefford':(Local.get('hh:phn')||pHost());
   el.innerHTML=`<div class="proto active" style="margin-bottom:14px"><div class="proto-h"><span class="pe">🐴</span><b>Partner portal — manure & litter</b><span class="who">→ ${esc(hn)}</span></div><div class="proto-body" id="ppBody"><p class="lead">Connecting…</p></div></div>`;
   const body=document.getElementById('ppBody');
+  if(demo){renderPortalBody(body,{litter:'full',litterBy:'Écurie Tremblay',litterAt:Date.now(),loads:[{kg:320,cat:'manure',co2e:0.2683,by:'Écurie Tremblay',ts:Date.now()}],notes:[{t:'Venez jeudi svp — bac plein',by:'Écurie Tremblay'}]},hn,true);return;}
   if(!sync.on){body.innerHTML='<p class="lead">Needs sync + sign-in.</p>';return;}
   try{
     const d=(await bridgeGet(bridgeId(sync.room,pHost())))||{};
-    const notes=(d.notes||[]).slice(-4).reverse();
-    body.innerHTML=`<div class="pl"><span class="k">🛏️ Reported level</span><span class="v">${esc(d.litter||'—')}</span></div>
-      <div class="row2" style="margin:8px 0"><select class="field" id="ppLv" style="margin:0"><option value="low">Low</option><option value="half">Half</option><option value="full">Full — come collect</option><option value="overflow">Overflowing</option></select><button class="btn clay" data-a="portalLitter" style="margin:0">Report</button></div>
-      ${notes.length?notes.map(n=>`<div class="pl" style="padding:7px 2px"><span class="k">${esc(n.t)}</span><span class="v" style="font-size:10px">${esc(n.by||'')}</span></div>`).join(''):'<p class="lead">No messages yet.</p>'}
-      <div class="row2" style="margin-top:8px"><input class="field" id="ppNote" style="margin:0" placeholder="Message to ${esc(hn)}…"><button class="btn" data-a="portalNote" style="margin:0">Send</button></div>
-      <button class="btn ghost" data-a="portalRefresh" style="margin-top:8px">🔄 Refresh</button>`;
+    renderPortalBody(body,d,hn,false);
   }catch(e){body.innerHTML='<p class="lead">Unreachable — check internet / sign-in.</p>';}
+}
+function renderPortalBody(body,d,hn,demo){
+  if(!body)return;
+  const notes=(d.notes||[]).slice(-4).reverse();
+  body.innerHTML=`${demo?'<div class="stat-line warn"><span>👁</span> Preview with sample data — this is what your partner sees on THEIR device.</div>':''}
+    <div class="pl"><span class="k">🛏️ Reported level</span><span class="v">${esc(d.litter||'—')}</span></div>
+    <div class="row2" style="margin:8px 0"><select class="field" id="ppLv" style="margin:0"><option value="low">Low</option><option value="half">Half</option><option value="full">Full — come collect</option><option value="overflow">Overflowing</option></select><button class="btn clay" data-a="portalLitter" style="margin:0">Report</button></div>
+    <button class="btn" data-a="wasteLoad" data-p="portal" style="margin:6px 0">⚖️ Log a load (kg → CO2e)</button>
+    ${loadsHTML(d)}
+    ${notes.length?notes.map(n=>`<div class="pl" style="padding:7px 2px"><span class="k">${esc(n.t)}</span><span class="v" style="font-size:10px">${esc(n.by||'')}</span></div>`).join(''):'<p class="lead">No messages yet.</p>'}
+    <div class="row2" style="margin-top:8px"><input class="field" id="ppNote" style="margin:0" placeholder="Message to ${esc(hn)}…"><button class="btn" data-a="portalNote" style="margin:0">Send</button></div>
+    <button class="btn ghost" data-a="portalRefresh" style="margin-top:8px">🔄 Refresh</button>`;
 }
 function portalRefresh(){renderPartnerPortal();}
 async function portalLitter(){
@@ -2227,9 +2544,11 @@ function saveWho(){const n=document.getElementById('whoName').value.trim();Local
 function signature(){const n=whoAmI(),r=whoRole();return n?(r?n+' · '+r:n):'Someone';}
 function isObserver(){return whoRole()==='Observer';}
 function isVet(){return whoRole()==='Vet';}
+const PV={vet:false,partner:false,carbon:false};
 function renderVetPortal(){
   const el=document.getElementById('vetPortal');if(!el)return;
-  if(!isVet()){el.innerHTML='';return;}
+  const force=PV.vet;PV.vet=false;
+  if(!isVet()&&!force){el.innerHTML='';return;}
   const risk=animals.filter(a=>!a._d&&(a.status==='high'||a.status==='med'));
   const wd=reminders.filter(r=>!r._d&&!r.done&&r.kind==='withdrawal'&&r.ts>=Date.now());
   const cut=Date.now()-14*DAY;
@@ -2243,7 +2562,7 @@ function renderVetPortal(){
   </div></div>`;
 }
 function updateBrand(){const el=document.getElementById('brandVer');if(el)el.textContent=farmName()+' · Team · v'+APP_VERSION+(isObserver()?' · 👁 Observer':(isVet()?' · 🩺 Vet':''));}
-const OBS_BLOCK={openCompose:1,saveEntry:1,setType:1,toggleMic:1,dictate:1,openNewAnimal:1,saveNewAnimal:1,editAnimal:1,saveEdit:1,delEvent:1,pickPhoto:1,setCover:1,delPhoto:1,openQuickCapture:1,qcCapture:1,qcSave:1,quickShot:1,ibAssign:1,ibDrop:1,toggleTask:1,resetTasks:1,openAddTask:1,editTask:1,saveTask:1,delTask:1,editGoals:1,saveGoals:1,openAddCircle:1,editCircle:1,saveCircle:1,delCircle:1,editAlert:1,saveAlert:1,resolveAlert:1,editVet:1,saveVet:1,delVet:1,openAddReminder:1,editReminder:1,saveReminder:1,doneReminder:1,delReminder:1,openAddBreeding:1,saveBreeding:1,markCalved:1,delBreeding:1,openAddInv:1,editInv:1,saveInv:1,delInv:1,invAdj:1,openAddOrder:1,addOrderLine:1,removeOrderLine:1,saveOrder:1,orderStatus:1,delOrder:1,openAddCalEvent:1,editCalEvent:1,saveCalEvent:1,delCalEvent:1,openAddDefect:1,editDefect:1,saveDefect:1,fixDefect:1,delDefect:1,editSite:1,saveSite:1,delSite:1,planCollect:1,sitePickPhoto:1,delSitePhoto:1,mergeAnimals:1,ibCreateAnimal:1,planCollectOn:1,pickDoc:1,docChoose:1,delDoc:1,godShot:1,godAssign:1,godNew:1,godSave:1,estLog:1,mapMode:1,mapFinishPad:1,savePin:1,delPin:1,savePad:1,delPad:1,mapSetBg:1,mapCal:1,mapCalSave:1,editProject:1,saveProject:1,delProject:1,projToggle:1,editPTask:1,savePTask:1,delPTask:1,ptStatus:1,logLabour:1,saveLabour:1,saveFarmProfile:1,plinkLitter:1,plinkNote:1,openSellSheet:1,marketPublish:1,marketSold:1,marketRemove:1};
+const OBS_BLOCK={openCompose:1,saveEntry:1,setType:1,toggleMic:1,dictate:1,openNewAnimal:1,saveNewAnimal:1,editAnimal:1,saveEdit:1,delEvent:1,pickPhoto:1,setCover:1,delPhoto:1,openQuickCapture:1,qcCapture:1,qcSave:1,quickShot:1,ibAssign:1,ibDrop:1,toggleTask:1,resetTasks:1,openAddTask:1,editTask:1,saveTask:1,delTask:1,editGoals:1,saveGoals:1,openAddCircle:1,editCircle:1,saveCircle:1,delCircle:1,editAlert:1,saveAlert:1,resolveAlert:1,editVet:1,saveVet:1,delVet:1,openAddReminder:1,editReminder:1,saveReminder:1,doneReminder:1,delReminder:1,openAddBreeding:1,saveBreeding:1,markCalved:1,delBreeding:1,openAddInv:1,editInv:1,saveInv:1,delInv:1,invAdj:1,openAddOrder:1,addOrderLine:1,removeOrderLine:1,saveOrder:1,orderStatus:1,delOrder:1,openAddCalEvent:1,editCalEvent:1,saveCalEvent:1,delCalEvent:1,openAddDefect:1,editDefect:1,saveDefect:1,fixDefect:1,delDefect:1,editSite:1,saveSite:1,delSite:1,planCollect:1,sitePickPhoto:1,delSitePhoto:1,mergeAnimals:1,ibCreateAnimal:1,planCollectOn:1,pickDoc:1,docChoose:1,delDoc:1,godShot:1,godAssign:1,godNew:1,godSave:1,estLog:1,mapMode:1,mapFinishPad:1,savePin:1,delPin:1,savePad:1,delPad:1,mapSetBg:1,mapCal:1,mapCalSave:1,editProject:1,saveProject:1,delProject:1,projToggle:1,editPTask:1,savePTask:1,delPTask:1,ptStatus:1,logLabour:1,saveLabour:1,saveFarmProfile:1,plinkLitter:1,plinkNote:1,openSellSheet:1,marketPublish:1,marketSold:1,marketRemove:1,pickClip:1,clipChoose:1,delClip:1,startDossier:1,dossierShot:1,wlSave:1,hwSerial:1,hwBle:1,editVax:1,saveVax:1,vaxDone:1,delVax:1};
 /* ----- circles ----- */
 function openAddCircle(){editCircle('');}
 function editCircle(id){
@@ -2325,7 +2644,77 @@ function renderVet(){
   // sops
   document.getElementById('sopList').innerHTML=SOPS.map((s,i)=>`<div class="sop" id="sop${i}"><div class="sop-h" data-a="toggleSop" data-p="${i}"><span class="se">${s.e}</span>${esc(s.t)}<span class="sx">›</span></div><div class="sop-b"><ul>${s.b.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div></div>`).join('');
   // vaccines
-  document.getElementById('vaxBox').innerHTML=`<div class="alert-c med"><div class="alert-head"><span class="alert-animal">Vaccination program</span><span class="sev med">To set</span></div><div class="alert-act">${esc(VAX.note)}</div></div>`;
+  renderVax();
+}
+function vaxNextDue(v){ if(!v.lastGiven||!v.intervalDays)return null; return v.lastGiven + v.intervalDays*DAY; }
+function vaxSev(v){ const nd=vaxNextDue(v); if(nd===null)return 'med'; const days=(nd-startOfToday())/DAY; if(days<0)return 'high'; if(days<=21)return 'med'; return 'ok'; }
+function vaxStatusTxt(v){ const nd=vaxNextDue(v); if(nd===null)return v.lastGiven?'Given '+fmtDate(v.lastGiven)+' · no interval set':'Not given yet'; const days=Math.round((nd-startOfToday())/DAY); if(days<0)return 'Overdue '+(-days)+'d (due '+fmtDate(nd)+')'; if(days===0)return 'Due today'; return 'Due in '+days+'d ('+fmtDate(nd)+')'; }
+function renderVax(){
+  const box=document.getElementById('vaxBox'); if(!box)return;
+  const list=vaxRecords.filter(v=>!v._d).sort((a,b)=>{const na=vaxNextDue(a),nb=vaxNextDue(b); if(na===null)return 1; if(nb===null)return -1; return na-nb;});
+  box.innerHTML = (list.length?list.map(v=>{
+    const sev=vaxSev(v); const a=v.animalId?animalById(v.animalId):null;
+    return `<div class="alert-c ${sev}"><div class="alert-head"><span class="alert-animal">💉 ${esc(v.name)}</span><span class="sev ${sev}">${sev==='high'?'Overdue':sev==='med'?'Soon':'OK'}</span></div>
+      <div class="alert-act">${esc(v.group||(a?a.name:'Whole herd'))} · ${esc(vaxStatusTxt(v))}${v.note?' · '+esc(v.note):''}</div>
+      <div class="post-f" style="margin-top:6px"><button class="pf-btn" data-a="vaxDone" data-p="${v.id}">✓ Given today</button><button class="pf-btn" data-a="editVax" data-p="${v.id}">✏️ Edit</button></div></div>`;
+  }).join(''):'<div class="empty" style="padding:14px"><span class="big">💉</span>No vaccines in the program yet. Add the ones your vet advises (clostridials, respiratory, reproductive…) — the app then tracks the next due date for each.</div>')
+    + `<button class="btn clay" data-a="editVax" style="margin-top:10px">＋ Add a vaccine to the program</button>`;
+}
+function editVax(id){
+  const v=id?vaxRecords.find(x=>x.id===id):{name:'',group:'',animalId:'',lastGiven:0,intervalDays:0,note:''};
+  if(!v)return;
+  const opts=animals.filter(a=>!a._d).map(a=>`<option value="${a.id}" ${v.animalId===a.id?'selected':''}>${a.emoji||'🐄'} ${esc(a.name)}${a.tag?' #'+a.tag:''}</option>`).join('');
+  const last=v.lastGiven?new Date(v.lastGiven).toISOString().slice(0,10):'';
+  document.getElementById('sheet').innerHTML=`<div class="grab"></div><h3>💉 ${id?'Edit vaccine':'Add vaccine'}</h3>
+    <label class="fl">Vaccine</label><input class="field" id="vxName" value="${esc(v.name)}" placeholder="e.g. Bovi-Shield (respiratory)">
+    <label class="fl">Applies to</label><input class="field" id="vxGroup" value="${esc(v.group||'')}" placeholder="e.g. All cows, Calves, Bred heifers">
+    <label class="fl">Specific animal (optional)</label><select class="field" id="vxAnimal"><option value="">— group / whole herd —</option>${opts}</select>
+    <div class="row2"><div><label class="fl">Last given</label><input class="field" id="vxLast" type="date" value="${last}"></div><div><label class="fl">Repeat every (days)</label><input class="field" id="vxInt" inputmode="numeric" value="${v.intervalDays||''}" placeholder="e.g. 365"></div></div>
+    <label class="fl">Note</label><input class="field" id="vxNote" value="${esc(v.note||'')}" placeholder="e.g. 2 mL SC, booster at 4 weeks">
+    <button class="btn clay" data-a="saveVax" data-p="${id||''}">${id?'Save':'Add to program'}</button>
+    ${id?`<button class="btn ghost" data-a="delVax" data-p="${id}">🗑 Remove from program</button>`:''}
+    <button class="btn ghost" data-a="closeSheet">Cancel</button>`;
+  openSheet();
+}
+function vaxSyncReminder(v){
+  const nd=vaxNextDue(v); const rid='vax:'+v.id;
+  const ex=reminders.find(r=>r.id===rid);
+  if(nd===null){ if(ex){ex._d=true;ex._u=Date.now();} return; }
+  const title='💉 '+v.name+' — '+(v.group||(v.animalId?(animalById(v.animalId)||{}).name:'')||'herd');
+  if(ex){ex.title=title;ex.ts=nd;ex.kind='vaccine';ex.animalId=v.animalId||'';ex.done=false;ex._d=false;ex._u=Date.now();}
+  else reminders.push({id:rid,title,kind:'vaccine',ts:nd,animalId:v.animalId||'',note:v.note||'',done:false,_u:Date.now(),_d:false});
+}
+async function saveVax(id){
+  const name=(document.getElementById('vxName')||{}).value.trim();
+  if(!name){toast('Name the vaccine');return;}
+  const lastStr=(document.getElementById('vxLast')||{}).value;
+  const v={
+    id:id||('vx'+Date.now()+Math.floor(Math.random()*99)),
+    name,
+    group:(document.getElementById('vxGroup')||{}).value.trim(),
+    animalId:(document.getElementById('vxAnimal')||{}).value||'',
+    lastGiven:lastStr?new Date(lastStr+'T12:00:00').getTime():0,
+    intervalDays:parseInt((document.getElementById('vxInt')||{}).value)||0,
+    note:(document.getElementById('vxNote')||{}).value.trim(),
+    _u:Date.now(),_d:false
+  };
+  if(id){const i=vaxRecords.findIndex(x=>x.id===id);if(i>-1)vaxRecords[i]=v;else vaxRecords.push(v);}
+  else vaxRecords.push(v);
+  vaxSyncReminder(v);
+  await persistData();closeSheet();renderVet();renderFeed();toast('💉 Vaccination program updated');
+}
+async function vaxDone(id){
+  const v=vaxRecords.find(x=>x.id===id);if(!v)return;
+  v.lastGiven=startOfToday();v._u=Date.now();
+  vaxSyncReminder(v);
+  try{ledgerLog(v.animalId?'animal':'herd',v.animalId||'herd','treatment',{vaccine:v.name,group:v.group||'',interval:v.intervalDays||0},signature());}catch(e){}
+  await persistData();renderVet();renderFeed();toast('✓ '+v.name+' recorded today'+(v.intervalDays?' — next due in '+v.intervalDays+'d':''));
+}
+async function delVax(id){
+  const v=vaxRecords.find(x=>x.id===id);if(!v)return;
+  v._d=true;v._u=Date.now();
+  const ex=reminders.find(r=>r.id==='vax:'+id);if(ex){ex._d=true;ex._u=Date.now();}
+  await persistData();closeSheet();renderVet();renderFeed();toast('Removed from program');
 }
 /* ----- editable ALERTS ----- */
 function editAlert(id){
@@ -2826,7 +3215,7 @@ async function mediaKick(){
       try{
         const row=await mdb.photoBlobs.get(j.localId),meta=await mdb.photos.get(j.localId);
         if(!row||!row.blob||!meta){await mdb.syncQueue.update(j.jobId,{status:'done'});continue;}
-        const path=`${encodeURIComponent(sync.room)}/${j.localId}.jpg`;
+        const path=`${encodeURIComponent(sync.room)}/${j.localId}.${extFromMime(meta.mime)}`;
         await ensureAuth();
         const r=await fetch(`${sync.url}/storage/v1/object/photos/${path}`,{method:'POST',headers:{'apikey':sync.key,'Authorization':'Bearer '+(auth.token||sync.key),'Content-Type':row.blob.type||'image/jpeg','x-upsert':'true'},body:row.blob});
         if(!r.ok)throw new Error('upload '+r.status);
@@ -2842,7 +3231,7 @@ async function mediaKick(){
 function attachRemotePath(localId,path){
   let hit=false;
   const scan=arr=>{(arr||[]).forEach(x=>{if(x&&x.ref===localId&&!x.path){x.path=path;hit=true;}});};
-  animals.forEach(a=>{scan(a.photos);scan(a.docs);if(a.photos&&a.photos.some(x=>x&&x.ref===localId))a._u=Date.now();});
+  animals.forEach(a=>{scan(a.photos);scan(a.docs);scan(a.clips);if((a.photos&&a.photos.some(x=>x&&x.ref===localId))||(a.clips&&a.clips.some(x=>x&&x.ref===localId)))a._u=Date.now();});
   sites.forEach(s=>{scan(s.photos);if(s.photos&&s.photos.some(x=>x&&x.ref===localId))s._u=Date.now();});
   scan(farmDocs);
   if(mapCfg&&mapCfg.photo&&mapCfg.photo.ref===localId&&!mapCfg.photo.path){mapCfg.photo.path=path;mapCfg._u=Date.now();hit=true;}
@@ -3088,15 +3477,15 @@ function disconnectSync(){sync.on=false;sync.url='';sync.key='';saveSyncCfg();if
 
 /* ===== SHEET + NAV ===== */
 function openSheet(){document.getElementById('overlay').classList.add('show');document.getElementById('sheet').classList.add('show');}
-function closeSheet(){if(listening&&recog)recog.stop();document.getElementById('overlay').classList.remove('show');document.getElementById('sheet').classList.remove('show');}
-function switchView(v){document.querySelectorAll('.view').forEach(s=>s.classList.remove('active'));document.getElementById('v-'+v).classList.add('active');document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('on',b.dataset.v===v));if(v==='feed')renderFeed();if(v==='tasks')renderTasks();if(v==='vet')renderVet();if(v==='herd')renderHerd();if(v==='info'){renderSyncStatusBox();renderDevNotes();renderAuthLine();renderLedgerLine();}if(v==='vet')renderVetPortal();if(v==='feed')renderPartnerPortal();if(v==='market')renderMarket();if(v==='logi')renderLogi();if(v==='cal')renderCal();if(v==='god')renderGod();if(v==='map')renderMap();const mod=v==='vet'?'vet':(v==='logi'?'logi':(v==='cal'?'cal':(v==='map'?'map':'herd')));['herd','vet','logi','cal','map'].forEach(m=>{const c=document.getElementById('mod-'+m);if(c)c.classList.toggle('on',m===mod);});window.scrollTo(0,0);}
+function closeSheet(){if(listening&&recog)recog.stop();if(qcDirty&&qcPhoto){const _p=qcPhoto;qcDirty=false;qcPhoto=null;inboxFromPhoto(_p).then(()=>toast('📥 Unsaved photo kept in the Inbox'));}document.getElementById('overlay').classList.remove('show');document.getElementById('sheet').classList.remove('show');}
+function switchView(v){document.querySelectorAll('.view').forEach(s=>s.classList.remove('active'));document.getElementById('v-'+v).classList.add('active');document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('on',b.dataset.v===v));if(v==='feed')renderFeed();if(v==='tasks')renderTasks();if(v==='vet')renderVet();if(v==='herd')renderHerd();if(v==='info'){renderSyncStatusBox();renderDevNotes();renderAuthLine();renderLedgerLine();}if(v==='vet')renderVetPortal();if(v==='feed')renderPartnerPortal();if(v==='market')renderMarket();if(v==='cal')carbonDash();if(v==='logi')renderLogi();if(v==='cal')renderCal();if(v==='god')renderGod();if(v==='map')renderMap();const mod=v==='vet'?'vet':(v==='logi'?'logi':(v==='cal'?'cal':(v==='map'?'map':'herd')));['herd','vet','logi','cal','map'].forEach(m=>{const c=document.getElementById('mod-'+m);if(c)c.classList.toggle('on',m===mod);});window.scrollTo(0,0);}
 document.getElementById('search').addEventListener('input',renderHerd);
 function exportData(){const blob=new Blob([JSON.stringify({animals,events,deleted,exported:new Date().toISOString()},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='herdhub-backup.json';a.click();URL.revokeObjectURL(url);toast('⬇ Backup downloaded');}
 
 /* ===== CLICK DELEGATION (works inside sandboxed iframes / strict CSP) ===== */
 function toggleSop(i){var e=document.getElementById('sop'+i);if(e)e.classList.toggle('open');}
 (function(){
-  var H={openCompose:openCompose,switchView:switchView,openProfile:openProfile,openNewAnimal:openNewAnimal,saveNewAnimal:saveNewAnimal,editAnimal:editAnimal,saveEdit:saveEdit,saveEntry:saveEntry,setType:setType,delEvent:delEvent,pickPhoto:pickPhoto,toggleTask:toggleTask,resetTasks:resetTasks,setFilter:setFilter,editAlert:editAlert,saveAlert:saveAlert,resolveAlert:resolveAlert,editVet:editVet,saveVet:saveVet,delVet:delVet,openSync:openSync,copySQL:copySQL,connectSync:connectSync,disconnectSync:disconnectSync,closeSheet:closeSheet,exportData:exportData,toggleSop:toggleSop,openAddTask:openAddTask,editTask:editTask,saveTask:saveTask,delTask:delTask,setCircle:setCircle,setWho:setWho,quickWho:quickWho,saveWho:saveWho,openAddCircle:openAddCircle,editCircle:editCircle,saveCircle:saveCircle,delCircle:delCircle,openAddReminder:openAddReminder,editReminder:editReminder,saveReminder:saveReminder,doneReminder:doneReminder,delReminder:delReminder,openAddBreeding:openAddBreeding,saveBreeding:saveBreeding,markCalved:markCalved,delBreeding:delBreeding,enableNotif:enableNotif,addToCalendar:addToCalendar,enlargePhoto:enlargePhoto,setCover:setCover,delPhoto:delPhoto,openQuickCapture:openQuickCapture,qcCapture:qcCapture,qcSave:qcSave,dictate:dictate,openInbox:openInbox,quickShot:quickShot,ibAssign:ibAssign,ibDrop:ibDrop,openDuplicates:openDuplicates,mergeAnimals:mergeAnimals,toggleMic:toggleMic,goModule:goModule,openAddInv:openAddInv,editInv:editInv,saveInv:saveInv,delInv:delInv,invAdj:invAdj,openAddOrder:openAddOrder,addOrderLine:addOrderLine,removeOrderLine:removeOrderLine,saveOrder:saveOrder,orderStatus:orderStatus,delOrder:delOrder,calSelectDay:calSelectDay,openAddCalEvent:openAddCalEvent,editCalEvent:editCalEvent,saveCalEvent:saveCalEvent,delCalEvent:delCalEvent,editGoals:editGoals,saveGoals:saveGoals,openAddDefect:openAddDefect,editDefect:editDefect,saveDefect:saveDefect,fixDefect:fixDefect,delDefect:delDefect,exportPurchases:exportPurchases,openSite:openSite,editSite:editSite,saveSite:saveSite,delSite:delSite,planCollect:planCollect,sitePickPhoto:sitePickPhoto,enlargeSitePhoto:enlargeSitePhoto,delSitePhoto:delSitePhoto,refreshWeather:refreshWeather,cropConfirm:cropConfirm,cropSkip:cropSkip,ibCreateAnimal:ibCreateAnimal,editDevNote:editDevNote,saveDevNote:saveDevNote,doneDevNote:doneDevNote,delDevNote:delDevNote,planCollectOn:planCollectOn,pickDoc:pickDoc,docChoose:docChoose,viewDoc:viewDoc,delDoc:delDoc,godShot:godShot,godAssign:godAssign,godNew:godNew,godSave:godSave,estWeight:estWeight,estCalc:estCalc,estLog:estLog,mapMode:mapMode,mapSat:mapSat,mapFinishPad:mapFinishPad,openPinSheet:openPinSheet,savePin:savePin,delPin:delPin,editPad:editPad,savePad:savePad,delPad:delPad,openProject:openProject,editProject:editProject,saveProject:saveProject,delProject:delProject,projToggle:projToggle,editPTask:editPTask,savePTask:savePTask,delPTask:delPTask,ptStatus:ptStatus,logLabour:logLabour,saveLabour:saveLabour,doLogin:doLogin,logout:logout,showGate:showGate,mapViewSet:mapViewSet,mapSetBg:mapSetBg,mapCal:mapCal,mapCalSave:mapCalSave,inviteDevice:inviteDevice,gateToggle:gateToggle,doSignup:doSignup,exportLedger:exportLedger,openFarmProfile:openFarmProfile,fpLocate:fpLocate,saveFarmProfile:saveFarmProfile,plinkRefresh:plinkRefresh,plinkLitter:plinkLitter,plinkNote:plinkNote,inviteVet:inviteVet,invitePartner:invitePartner,portalLitter:portalLitter,portalNote:portalNote,portalRefresh:portalRefresh,openSellSheet:openSellSheet,marketPublish:marketPublish,marketSold:marketSold,marketRemove:marketRemove,marketRefresh:marketRefresh,installApp:installApp};
+  var H={openCompose:openCompose,switchView:switchView,openProfile:openProfile,openNewAnimal:openNewAnimal,saveNewAnimal:saveNewAnimal,editAnimal:editAnimal,saveEdit:saveEdit,saveEntry:saveEntry,setType:setType,delEvent:delEvent,pickPhoto:pickPhoto,toggleTask:toggleTask,resetTasks:resetTasks,setFilter:setFilter,editAlert:editAlert,saveAlert:saveAlert,resolveAlert:resolveAlert,editVet:editVet,saveVet:saveVet,delVet:delVet,openSync:openSync,copySQL:copySQL,connectSync:connectSync,disconnectSync:disconnectSync,closeSheet:closeSheet,exportData:exportData,toggleSop:toggleSop,openAddTask:openAddTask,editTask:editTask,saveTask:saveTask,delTask:delTask,setCircle:setCircle,setWho:setWho,quickWho:quickWho,saveWho:saveWho,openAddCircle:openAddCircle,editCircle:editCircle,saveCircle:saveCircle,delCircle:delCircle,openAddReminder:openAddReminder,editReminder:editReminder,saveReminder:saveReminder,doneReminder:doneReminder,delReminder:delReminder,openAddBreeding:openAddBreeding,saveBreeding:saveBreeding,markCalved:markCalved,delBreeding:delBreeding,enableNotif:enableNotif,addToCalendar:addToCalendar,enlargePhoto:enlargePhoto,setCover:setCover,delPhoto:delPhoto,openQuickCapture:openQuickCapture,qcCapture:qcCapture,qcSave:qcSave,dictate:dictate,openInbox:openInbox,quickShot:quickShot,ibAssign:ibAssign,ibDrop:ibDrop,openDuplicates:openDuplicates,mergeAnimals:mergeAnimals,toggleMic:toggleMic,goModule:goModule,openAddInv:openAddInv,editInv:editInv,saveInv:saveInv,delInv:delInv,invAdj:invAdj,openAddOrder:openAddOrder,addOrderLine:addOrderLine,removeOrderLine:removeOrderLine,saveOrder:saveOrder,orderStatus:orderStatus,delOrder:delOrder,calSelectDay:calSelectDay,openAddCalEvent:openAddCalEvent,editCalEvent:editCalEvent,saveCalEvent:saveCalEvent,delCalEvent:delCalEvent,editGoals:editGoals,saveGoals:saveGoals,openAddDefect:openAddDefect,editDefect:editDefect,saveDefect:saveDefect,fixDefect:fixDefect,delDefect:delDefect,exportPurchases:exportPurchases,openSite:openSite,editSite:editSite,saveSite:saveSite,delSite:delSite,planCollect:planCollect,sitePickPhoto:sitePickPhoto,enlargeSitePhoto:enlargeSitePhoto,delSitePhoto:delSitePhoto,refreshWeather:refreshWeather,cropConfirm:cropConfirm,cropSkip:cropSkip,ibCreateAnimal:ibCreateAnimal,editDevNote:editDevNote,saveDevNote:saveDevNote,doneDevNote:doneDevNote,delDevNote:delDevNote,planCollectOn:planCollectOn,pickDoc:pickDoc,docChoose:docChoose,viewDoc:viewDoc,delDoc:delDoc,godShot:godShot,godAssign:godAssign,godNew:godNew,godSave:godSave,estWeight:estWeight,estCalc:estCalc,estLog:estLog,mapMode:mapMode,mapSat:mapSat,mapFinishPad:mapFinishPad,openPinSheet:openPinSheet,savePin:savePin,delPin:delPin,editPad:editPad,savePad:savePad,delPad:delPad,openProject:openProject,editProject:editProject,saveProject:saveProject,delProject:delProject,projToggle:projToggle,editPTask:editPTask,savePTask:savePTask,delPTask:delPTask,ptStatus:ptStatus,logLabour:logLabour,saveLabour:saveLabour,doLogin:doLogin,logout:logout,showGate:showGate,mapViewSet:mapViewSet,mapSetBg:mapSetBg,mapCal:mapCal,mapCalSave:mapCalSave,inviteDevice:inviteDevice,gateToggle:gateToggle,doSignup:doSignup,exportLedger:exportLedger,openFarmProfile:openFarmProfile,fpLocate:fpLocate,saveFarmProfile:saveFarmProfile,plinkRefresh:plinkRefresh,plinkLitter:plinkLitter,plinkNote:plinkNote,inviteVet:inviteVet,invitePartner:invitePartner,portalLitter:portalLitter,portalNote:portalNote,portalRefresh:portalRefresh,openSellSheet:openSellSheet,marketPublish:marketPublish,marketSold:marketSold,marketRemove:marketRemove,marketRefresh:marketRefresh,installApp:installApp,pickClip:pickClip,clipChoose:clipChoose,viewClip:viewClip,delClip:delClip,startDossier:startDossier,dossierShot:dossierShot,wasteLoad:wasteLoad,wlSave:wlSave,hwSerial:hwSerial,hwBle:hwBle,pvVet:pvVet,pvPartner:pvPartner,pvCarbon:pvCarbon,syncRetry:syncRetry,editVax:editVax,saveVax:saveVax,vaxDone:vaxDone,delVax:delVax};
   document.addEventListener('click',function(e){
     var t=e.target; var el=t&&t.closest?t.closest('[data-a]'):null;
     if(!el)return;
@@ -3143,6 +3532,7 @@ function toggleSop(i){var e=document.getElementById('sop'+i);if(e)e.classList.to
   mediaKick();setInterval(mediaKick,20000);
   ledgerKick();setInterval(ledgerKick,25000);
   registerSW();
+  buildSyncWarn();
   window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;const b=document.getElementById('installBtn');if(b)b.style.display='';});
   window.addEventListener('appinstalled',()=>{const b=document.getElementById('installBtn');if(b)b.style.display='none';toast('📲 Installed!');});
   checkDue(); setInterval(checkDue,60000);
