@@ -1,6 +1,6 @@
 /* GNR Suite — service worker: cache the app shell so it opens instantly,
    even with zero connectivity. Bump CACHE_NAME on each deploy to bust old shells. */
-const CACHE_NAME = 'gnr-suite-shell-v8.7';
+const CACHE_NAME = 'gnr-suite-shell-v8.9';
 const TILE_CACHE = 'gnr-tiles-v1';
 const TILE_MAX = 400;
 const SHELL = ['./', './index.html', './manifest.json',
